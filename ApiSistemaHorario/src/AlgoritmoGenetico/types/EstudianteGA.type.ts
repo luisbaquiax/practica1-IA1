@@ -1,4 +1,4 @@
-import { CursoDisponible } from "./CursoDisponible";
+import { CursoDisponible } from "./CursoDisponible.type";
 
 export interface EstudianteGA {
   carnet: number;
