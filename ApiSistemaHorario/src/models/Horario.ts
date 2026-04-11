@@ -9,6 +9,7 @@ class Horario extends Model<InferAttributes<Horario>, InferCreationAttributes<Ho
   declare docente: string;
   declare horario: string;
   declare salon: string;
+  declare dia: string;
 }
 
 Horario.init(
@@ -20,6 +21,7 @@ Horario.init(
     docente: { type: DataTypes.STRING(100), allowNull: false },
     horario: { type: DataTypes.STRING(50), allowNull: false },
     salon: { type: DataTypes.STRING(20), allowNull: false },
+    dia: { type: DataTypes.STRING(20), allowNull: false },
   },
   { sequelize, tableName: 'horario', timestamps: false },
 );

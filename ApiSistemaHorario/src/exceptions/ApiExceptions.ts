@@ -1,6 +1,6 @@
 // Se lanza cuando se busca un recurso por id y no existe en la base de datos
 export class NotFoundError extends Error {
-  constructor(resource: string, id: number) {
+  constructor(resource: string, id: number | string) {
     super(`${resource} con id ${id} no encontrado`);
     this.name = 'NotFoundError';
   }
@@ -14,5 +14,21 @@ export class ConflictError extends Error {
       .join(', ');
     super(`${resource} con (${detail}) ya existe`);
     this.name = 'ConflictError';
+  }
+}
+
+// Se lanza cuando las credenciales son incorrectas
+export class UnauthorizedError extends Error {
+  constructor(message = 'Credenciales incorrectas') {
+    super(message);
+    this.name = 'UnauthorizedError';
+  }
+}
+
+// Se lanza cuando los datos de entrada son inválidos
+export class BadRequestError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'BadRequestError';
   }
 }

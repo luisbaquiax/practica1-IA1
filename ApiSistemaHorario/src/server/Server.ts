@@ -5,6 +5,11 @@ import sequelize from '../database/connection';
 import sinchronize from '../database/sincronizar';
 import '../models';
 import { errorHandler } from '../middlewares/errorHandler';
+import authRouter        from '../routes/authRoutes';
+import estudianteRouter  from '../routes/estudianteRoutes';
+import pensumRouter      from '../routes/pensumRoutes';
+import cargaDatosRouter  from '../routes/cargaDatosRoutes';
+import dashboardRouter   from '../routes/dashboardRoutes';
 
 class Server {
   public app: Application;
@@ -16,7 +21,7 @@ class Server {
     this.middlewares();
     this.routes();
     this.dbConnection();
-    //this.sinchronize();
+    this.sinchronize();
     this.listen();
     this.app.use(cors({
       origin: ['*'],
@@ -33,6 +38,11 @@ class Server {
     this.app.get('/', (req: Request, res: Response) => {
       res.json({ msg: 'api corriendo... 🚀' });
     });
+    this.app.use('/api/auth',        authRouter);
+    this.app.use('/api/estudiantes', estudianteRouter);
+    this.app.use('/api/pensum',      pensumRouter);
+    this.app.use('/api/carga-datos', cargaDatosRouter);
+    this.app.use('/api/dashboard',   dashboardRouter);
     this.app.use(errorHandler);
   }
 

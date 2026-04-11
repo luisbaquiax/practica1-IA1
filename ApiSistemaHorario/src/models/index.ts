@@ -10,26 +10,39 @@ import Pais from "./Pais";
 import Prerequisito from "./Prerequisito";
 import TipoEstudiante from "./TipoEstudiante";
 
-Estudiante.belongsTo(Carrera, { foreignKey: "carreraId" });
-Carrera.hasMany(Estudiante, { foreignKey: "carreraId" });
+// Estudiante ↔ Carrera
+Estudiante.belongsTo(Carrera, { foreignKey: "carrera_id" });
+Carrera.hasMany(Estudiante, { foreignKey: "carrera_id" });
 
-Carrera.belongsToMany(Curso, { through: CarreraCursos, foreignKey: "carreraId" });
-Curso.belongsToMany(Carrera, { through: CarreraCursos, foreignKey: "cursoId" });
+// Carrera ↔ Curso (tabla intermedia carrera_cursos)
+Carrera.belongsToMany(Curso, { through: CarreraCursos, foreignKey: "carrera_id", otherKey: "codigo_curso_id" });
+Curso.belongsToMany(Carrera, { through: CarreraCursos, foreignKey: "codigo_curso_id", otherKey: "carrera_id" });
 
-ContactoEstudiante.belongsTo(Estudiante, { foreignKey: "estudianteId" });
-Estudiante.hasOne(ContactoEstudiante, { foreignKey: "estudianteId" });
+// ContactoEstudiante ↔ Estudiante
+ContactoEstudiante.belongsTo(Estudiante, { foreignKey: "carnet_estudiante_id" });
+Estudiante.hasOne(ContactoEstudiante, { foreignKey: "carnet_estudiante_id" });
 
-Curso.belongsTo(Departamento, { foreignKey: "departamentoId" });
-Departamento.hasMany(Curso, { foreignKey: "departamentoId" });
+// Historial ↔ Estudiante
+Historial.belongsTo(Estudiante, { foreignKey: "carnet_estudiante_id" });
+Estudiante.hasMany(Historial, { foreignKey: "carnet_estudiante_id" });
 
-Historial.belongsTo(Estudiante, { foreignKey: "estudianteId" });
-Estudiante.hasMany(Historial, { foreignKey: "estudianteId" });
+// Horario ↔ Curso  /  Horario ↔ Estudiante
+Horario.belongsTo(Curso, { foreignKey: "codigo_curso_id" });
+Curso.hasMany(Horario, { foreignKey: "codigo_curso_id" });
+Horario.belongsTo(Estudiante, { foreignKey: "carnet_estudiante_id" });
+Estudiante.hasMany(Horario, { foreignKey: "carnet_estudiante_id" });
 
-Horario.belongsTo(Curso, { foreignKey: "cursoId" });
-Curso.hasMany(Horario, { foreignKey: "cursoId" });
+// Prerequisito ↔ Curso
+Prerequisito.belongsTo(Curso, { foreignKey: "codigo_curso_id" });
+Curso.hasMany(Prerequisito, { foreignKey: "codigo_curso_id" });
 
-Prerequisito.belongsTo(Curso, { foreignKey: "cursoId" });
-Curso.hasMany(Prerequisito, { foreignKey: "cursoId" });
+// Departamento ↔ Pais
+Departamento.belongsTo(Pais, { foreignKey: "pais_id" });
+Pais.hasMany(Departamento, { foreignKey: "pais_id" });
+
+// Estudiante ↔ TipoEstudiante
+Estudiante.belongsTo(TipoEstudiante, { foreignKey: "tipo_estudiante" });
+TipoEstudiante.hasMany(Estudiante, { foreignKey: "tipo_estudiante" });
 
 export {
   Estudiante,
