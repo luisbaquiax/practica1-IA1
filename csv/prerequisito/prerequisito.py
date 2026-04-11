@@ -1,6 +1,8 @@
 import pandas as pd
 import os
 
+# se agrega
+
 def generar_csv_prerequisitos():
     # 1. Lista de archivos de prerequisitos
     archivos_prre = [
