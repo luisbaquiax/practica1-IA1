@@ -19,7 +19,7 @@ codigo,nombre,creditos,semestre,obligatorio
 3017,Psicología Industrial,3,3,SI
 3018,Legislación 2,3,3,NO
 3019,Ética Profesional 1,2,3,NO
-3020,Prácticas Iniciales,5,3,SI
+3020,Prácticas Iniciales,0,3,SI
 3021,Área Matemática Intermedia 2,6,4,SI
 3022,Área Matemática Intermedia 3,6,4,SI
 3023,Física 2,6,4,SI
@@ -50,7 +50,7 @@ codigo,nombre,creditos,semestre,obligatorio
 3048,Investigación de Operaciones 2,6,7,SI
 3049,Metalurgia y Metalografía,6,7,NO
 3050,Termodinámica 2,6,7,NO
-3051,Prácticas Intermedias,3,7,SI
+3051,Prácticas Intermedias,0,7,SI
 3052,Control de la Producción,6,8,SI
 3053,Gestión Ambiental,4,8,SI
 3054,Administración de Recursos Humanos,6,8,SI

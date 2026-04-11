@@ -9,11 +9,11 @@ codigo,nombre,creditos,semestre,obligatorio
 3006,Área Matemática Básica 2,9,2,SI
 3007,Física Básica,5,2,SI
 3161,Química para Ingeniería Civil,6,2,SI
-3187,Dibujo Constructivo para Ingeniería,6,2,SI
+3162,Dibujo Constructivo para Ingeniería,6,2,SI
 3013,Área Matemática Intermedia 1,9,3,SI
 3014,Física 1,5,3,SI
 3163,Ecología,4,3,SI
-3164,Prácticas Iniciales,4,3,SI
+3164,Prácticas Iniciales,0,3,SI
 3019,Ética Profesional,2,3,NO
 3165,Geografía,4,3,NO
 3089,Lógica,1,3,NO
@@ -55,7 +55,7 @@ codigo,nombre,creditos,semestre,obligatorio
 3191,Máquinas Hidráulicas,6,7,NO
 3192,Ingeniería Económica 2,4,7,NO
 3193,Administración de Recursos Humanos,6,7,NO
-3194,Prácticas Intermedias,5,7,SI
+3194,Prácticas Intermedias,0,7,SI
 3195,Vías Terrestres 2,4,8,SI
 3196,Tipología Estructural,3,8,NO
 3197,Concreto Armado 2,5,8,SI

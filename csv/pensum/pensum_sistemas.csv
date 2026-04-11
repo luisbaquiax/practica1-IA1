@@ -24,7 +24,7 @@ codigo,nombre,creditos,semestre,obligatorio
 3023,Física 2,6,4,SI
 3089,Lógica,1,4,NO
 3237,Idioma Técnico 4,3,4,NO
-3238,Prácticas Iniciales,5,4,SI
+3238,Prácticas Iniciales,0,4,SI
 3090,Estadística 1,5,5,SI
 3239,Organización de Lenguajes y Compiladores 1,6,5,SI
 3240,Organización Computacional,4,5,SI
@@ -48,7 +48,7 @@ codigo,nombre,creditos,semestre,obligatorio
 3251,Arquitectura de Computadoras y Ensambladores 2,5,7,SI
 3252,Redes de Computadoras 1,5,7,SI
 3253,Sistemas de Bases de Datos 1,6,7,SI
-3254,Prácticas Intermedias,6,7,SI
+3254,Prácticas Intermedias,0,7,SI
 3255,Sistemas Operativos 2,4,8,SI
 3256,Redes de Computadoras 2,6,8,SI
 3257,Sistemas de Bases de Datos 2,7,8,SI
@@ -62,7 +62,7 @@ codigo,nombre,creditos,semestre,obligatorio
 3264,Análisis y Diseño de Sistemas 2,7,9,SI
 3265,Seminario de Sistemas 2,5,9,SI
 3266,Sistemas Aplicados 1,5,9,NO
-3267,Bases de Datos Avanzadas,5,9,NO
+3267,Bases de Datos Avanzadas,0,9,NO
 3268,Prácticas Finales Ingeniería Ciencias y Sistemas,3,9,SI
 3269,Modelación y Simulación 2,6,10,SI
 3270,Sistemas Organizacionales y Gerenciales 2,6,10,SI
