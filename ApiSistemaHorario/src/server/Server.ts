@@ -48,7 +48,7 @@ class Server {
 
   private async sinchronize(): Promise<void> {
     try {
-      await sinchronize;
+      //await sinchronize;
       console.log('Modelos sincronizados con la base de datos');
     } catch (error) {
       console.error('Error al sincronizar los modelos:', error);

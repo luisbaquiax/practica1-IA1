@@ -5,6 +5,7 @@ import '../models/CarreraCursos';
 import '../models/ContactoEstudiante';
 import '../models/Curso';
 import '../models/Departamento';
+import '../models/Municipio';
 import '../models/Estudiante';
 import '../models/Historial';
 import '../models/Horario';
