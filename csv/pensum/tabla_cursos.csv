@@ -1,0 +1,228 @@
+codigo,nombre,creditos,semestre,es_obligatorio
+3003,Área Social Humanística 1,3,1,True
+3000,Área Matemática Básica 1,9,1,True
+3005,Técnicas de Estudio e Investigación,3,1,True
+3082,Deportes 1,2,1,False
+3081,Idioma Técnico 1,3,1,False
+3011,Área Social Humanística 2,3,2,True
+3006,Área Matemática Básica 2,9,2,True
+3231,Matemática para Computación 1,5,2,True
+3007,Física Básica,5,2,True
+3086,Deportes 2,2,2,False
+3085,Idioma Técnico 2,3,2,False
+3232,Lógica de Sistemas,3,3,True
+3233,Matemática para Computación 2,5,3,True
+3234,Introducción a la Programación y Computación 1,6,3,True
+3013,Área Matemática Intermedia 1,9,3,True
+3014,Física 1,5,3,True
+3019,Ética Profesional,2,3,False
+3098,Idioma Técnico 3,3,3,False
+3235,Lenguajes Formales y de Programación,4,4,True
+3236,Introducción a la Programación y Computación 2,6,4,True
+3021,Área Matemática Intermedia 2,6,4,True
+3022,Área Matemática Intermedia 3,6,4,True
+3023,Física 2,6,4,True
+3089,Lógica,1,4,False
+3237,Idioma Técnico 4,3,4,False
+3238,Prácticas Iniciales,5,4,True
+3090,Estadística 1,5,5,True
+3239,Organización de Lenguajes y Compiladores 1,6,5,True
+3240,Organización Computacional,4,5,True
+3241,Estructura de Datos,6,5,True
+3027,Matemática Aplicada 3,5,5,True
+3028,Matemática Aplicada 1,5,5,True
+3026,Filosofía de la Ciencia,1,5,False
+3242,Teoría de Sistemas 1,4,6,True
+3243,Investigación de Operaciones 1,6,6,True
+3244,Economía,3,6,True
+3245,Organización de Lenguajes y Compiladores 2,6,6,True
+3246,Arquitectura de Computadoras y Ensambladores 1,5,6,True
+3247,Manejo e Implementación de Archivos,5,6,True
+3036,Matemática Aplicada 4,5,6,False
+3121,Matemática Aplicada 2,5,6,False
+3033,Ingeniería Eléctrica 1,6,6,False
+3248,Teoría de Sistemas 2,4,7,True
+3249,Investigación de Operaciones 2,6,7,True
+3118,Estadística 2,5,7,False
+3250,Sistemas Operativos 1,6,7,True
+3251,Arquitectura de Computadoras y Ensambladores 2,5,7,True
+3252,Redes de Computadoras 1,5,7,True
+3253,Sistemas de Bases de Datos 1,6,7,True
+3254,Prácticas Intermedias,6,7,True
+3255,Sistemas Operativos 2,4,8,True
+3256,Redes de Computadoras 2,6,8,True
+3257,Sistemas de Bases de Datos 2,7,8,True
+3258,Análisis y Diseño de Sistemas 1,6,8,True
+3259,Seminario de Sistemas 1,5,8,True
+3110,Ingeniería Económica 1,4,8,False
+3260,Modelación y Simulación 1,5,9,True
+3261,Sistemas Organizacionales y Gerenciales 1,5,9,True
+3262,Inteligencia Artificial 1,7,9,True
+3263,Seguridad y Auditoría de Redes de Computadoras,3,9,False
+3264,Análisis y Diseño de Sistemas 2,7,9,True
+3265,Seminario de Sistemas 2,5,9,True
+3266,Sistemas Aplicados 1,5,9,False
+3267,Bases de Datos Avanzadas,5,9,False
+3268,Prácticas Finales Ingeniería Ciencias y Sistemas,3,9,True
+3269,Modelación y Simulación 2,6,10,True
+3270,Sistemas Organizacionales y Gerenciales 2,6,10,True
+3271,Emprendedores de Negocios Informáticos,6,10,False
+3272,Inteligencia Artificial 2,5,10,False
+3273,Redes de Nueva Generación,3,10,False
+3274,Software Avanzado,8,10,True
+3275,Sistemas Aplicados 2,5,10,False
+3276,Auditoría de Proyectos de Software,6,10,False
+3277,Seminario de Investigación EPS Sistemas,3,10,True
+3278,Seminario de Investigación,3,10,True
+3001,Química General 1,7,1,True
+3004,Área Técnica Complementaria 1,4,1,True
+3083,Idioma Técnico 1,3,1,False
+3084,Ecología,4,2,True
+3020,Prácticas Iniciales,0,3,True
+3087,Legislación 1,3,3,False
+3088,Química 2,6,3,False
+3025,Mecánica Analítica 1,4,4,True
+3091,Programación de Computadoras 1,3,5,True
+3034,Mecánica de Fluidos,5,5,True
+3029,Mecánica Analítica 2,5,5,True
+3092,Electricidad y Electrónica Básica,6,5,True
+3093,Ingeniería Eléctrica 2,6,6,True
+3042,Termodinámica 1,6,6,True
+3031,Resistencia de Materiales 1,5,6,True
+3032,Ciencia de los Materiales,4,6,True
+3094,Hidráulica,5,6,False
+3099,Ingeniería de Costos,4,6,False
+3095,Máquinas Hidráulicas,6,7,True
+3096,Mecanismos,3,7,True
+3050,Termodinámica 2,6,7,True
+3040,Resistencia de Materiales 2,5,7,True
+3041,Procesos de Manufactura 1,5,7,True
+3097,Prácticas Intermedias,0,7,True
+3024,Estadística 2,3,7,False
+3057,Diseño de Máquinas 1,4,8,True
+3059,Plantas de Vapor,6,8,True
+3049,Metalurgia y Metalografía,6,8,True
+3100,Procesos de Manufactura 2,5,8,True
+3101,Mantenimiento de Hospitales 1,4,8,True
+3102,Vibraciones,6,8,True
+3103,Montaje y Mantenimiento de Equipo,4,9,True
+3104,Mantenimiento de Hospitales 2,4,9,True
+3105,Diseño de Máquinas 2,4,9,True
+3106,Refrigeración y Aire Acondicionado,6,9,True
+3107,Seminario de Investigación Mecánica,4,9,True
+3108,Prácticas Finales de Ingeniería Mecánica,0,9,True
+3111,Salud y Seguridad Ocupacional,5,9,False
+3109,Seminario de Investigación E.P.S Mecánica,4,9,False
+3112,Instrumentación Mecánica,3,10,True
+3113,Instalaciones Mecánicas,5,10,True
+3114,Mantenimiento de Hospitales 3,4,10,True
+3115,Diseño de Maquinas 3,4,10,True
+3058,Motores de Combustión Interna,6,10,False
+3116,Fundamentos de Administración,4,10,False
+3117,Investigación de Operaciones,6,10,False
+3002,Informática,3,1,True
+3008,Química 2,6,2,False
+3009,Ecología,4,2,True
+3010,Programación Comercial,4,2,True
+3012,Legislación 1,3,2,True
+3015,Estadística 1,5,3,True
+3016,Dibujo Técnico Mecánico,3,3,True
+3017,Psicología Industrial,3,3,True
+3018,Legislación 2,3,3,False
+3602,Filosofía de la Ciencia,1,4,False
+3030,Diseño Industrial,6,5,True
+3035,Principios de Metrología,4,5,False
+3037,Control Estadístico de la Calidad,6,6,True
+3038,Ingeniería de Costos,4,6,True
+3039,Investigación de Operaciones 1,6,6,True
+3043,Gestión de Desastres,4,7,False
+3044,Ingeniería de Métodos,7,7,True
+3045,Administración Financiera,4,7,True
+3046,Fundamentos de Mercadotecnia,4,7,True
+3047,Fundamentos de Administración,4,7,True
+3048,Investigación de Operaciones 2,6,7,True
+3051,Prácticas Intermedias,3,7,True
+3052,Control de la Producción,6,8,True
+3053,Gestión Ambiental,4,8,True
+3054,Administración de Recursos Humanos,6,8,True
+3055,Comercio Internacional,3,8,True
+3056,Ingeniería Económica 1,4,8,True
+3060,Salud y Seguridad Ocupacional,5,9,True
+3061,Montaje y Mantenimiento de Equipo,4,9,True
+3062,Preparación y Evaluación de Proyectos 1,5,9,True
+3063,Gestión Tecnológica,4,9,True
+3064,Seminario de Investigación Industrial,3,9,True
+3065,Logística y Cadena de Suministro,4,9,True
+3066,Microeconomía,3,9,True
+3067,Análisis de Sistemas Industriales,2,9,False
+3068,Seminario de Investigación EPS Industrial,1,9,False
+3069,Ingeniería de Plantas,6,10,True
+3070,Sistema de Gestión de la Calidad,6,10,True
+3071,Gestión de Proyectos,4,10,True
+3072,Innovación y Emprendimiento,6,10,True
+3073,Economía Industrial,3,10,False
+3074,Ingeniería Textil,4,10,False
+3075,Introducción al Estudio del Impacto Ambiental,4,10,False
+3076,Prácticas Finales Ingeniería Industrial,3,10,True
+3161,Química para Ingeniería Civil,6,2,True
+3187,Dibujo Constructivo para Ingeniería,6,2,True
+3163,Ecología,4,3,True
+3164,Prácticas Iniciales,4,3,True
+3165,Geografía,4,3,False
+3166,Topografía 1,7,4,True
+3167,Geología,4,4,True
+3168,Legislación 1,3,4,False
+3169,Introducción a la Ingeniería Petrolera,4,4,False
+3170,Topografía 2,7,5,True
+3171,Materiales de Construcción 1,6,5,True
+3172,Mecánica de Fluidos,5,5,True
+3173,Geología Estructural,3,5,False
+3174,Geofísica,3,5,False
+3175,Perforación de Pozos 1,4,5,False
+3176,Petrología,4,5,False
+3177,Geología del Petróleo,4,5,False
+3178,Topografía 3,6,6,False
+3179,Instalaciones Eléctricas (Civil),4,6,True
+3180,Materiales de Construcción 2,7,6,True
+3181,Mecánica de Suelos 1,5,6,True
+3182,Hidráulica,5,6,True
+3183,Ingeniería Económica 1,4,6,True
+3184,Psicología Industrial,3,6,False
+3185,Legislación 2,3,6,False
+3186,Vías Terrestres 1,6,7,True
+3188,Concreto Armado 1,5,7,True
+3189,Hidrología,6,7,True
+3190,Hidráulica de Canales,4,7,True
+3191,Máquinas Hidráulicas,6,7,False
+3192,Ingeniería Económica 2,4,7,False
+3193,Administración de Recursos Humanos,6,7,False
+3194,Prácticas Intermedias,5,7,True
+3195,Vías Terrestres 2,4,8,True
+3196,Tipología Estructural,3,8,False
+3197,Concreto Armado 2,5,8,True
+3198,Cimentaciones 1,4,8,True
+3199,Aguas Subterráneas,3,8,False
+3200,Introducción al Estudio de Impacto Ambiental,4,8,True
+3201,Análisis Mecánico,5,8,False
+3202,Ingeniería Sanitaria 1,4,8,True
+3203,Ingeniería Sanitaria 2,4,8,True
+3204,Investigación 1,4,8,True
+3205,Fundamentos de Administración,4,8,False
+3206,Pavimentos,4,9,True
+3207,Ingeniería de Tránsito y Transportes,4,9,False
+3208,Diseño Estructural 1,6,9,True
+3209,Cimentaciones 2,4,9,True
+3210,Obras Hidráulicas,4,9,False
+3211,Preparación y Evaluación de Proyectos,5,9,True
+3212,Saneamiento Ambiental,3,9,True
+3213,Gestión de Desastres,4,9,False
+3214,Puentes,5,10,True
+3215,Diseño Estructural 2,6,10,True
+3216,Métodos de Construcción y Supervisión de Obras,4,10,True
+3217,Urbanismo,4,10,False
+3218,Planeamiento,4,10,True
+3219,Costos  Presupuestos y Avalúos,5,10,True
+3220,Gestión de Proyectos,4,10,False
+3221,Prácticas Finales de Ingeniería Civil,3,10,True
+3222,Seminario de Investigación EPS,3,10,False
+3223,Seminario de Investigación Civil,3,10,True
