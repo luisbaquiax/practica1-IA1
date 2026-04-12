@@ -1,0 +1,242 @@
+# PROMPT PARA AGENTE CLAUDE EN VS CODE
+
+## Contexto del Proyecto
+Estoy desarrollando una práctica de Inteligencia Artificial 1 (CUNOC, USAC) en TypeScript/Node.js. 
+El proyecto es un sistema de recomendación de horarios académicos personalizados usando 
+Algoritmos Genéticos con la librería **genetic-js**.
+
+## Estructura actual del proyecto
+```
+src/
+├── AlgoritmoGenetico/
+│   └── genetic/
+│       ├── AlgoritmoGenetico.ts   (vacío)
+│       ├── Cruce.ts               (vacío)
+│       ├── FuncionAptitud.ts      (vacío)
+│       ├── Mutacion.ts            (vacío)
+│       ├── Poblacion.ts           (vacío)
+│       └── Seleccion.ts           (vacío)
+│   └── mappers/
+│       └── MapperFromHorarioGeneral.ts  (vacío)
+│   └── services/
+│       └── GaService.ts           (vacío)
+│   └── types/
+│       ├── ConfigGA.type.ts       (vacío)
+│       ├── CursoDisponible.type.ts (vacío)
+│       ├── EstudianteGA.type.ts   (vacío)
+│       ├── genetic-js.d.ts        (vacío)
+│       ├── HorarioGeneral.type.ts (vacío)
+│       ├── HorarioPersonalizadoGA.type.ts (vacío)
+│       ├── Individuo.types.ts     (vacío)
+│       └── ResultadoGA.type.ts    (vacío)
+└── utils/   (carpeta FALTA CREAR)
+    ├── ValidadorRestricciones.ts  (FALTA)
+    └── ValidatorPensum.ts         (FALTA)
+```
+
+## Dominio del problema
+
+### Base de datos (PostgreSQL) — tablas relevantes que ya existen:
+- **estudiante**: carnet, carrera_id, tipo_estudiante_id, dpi, nombres, apellidos, fecha_nacimiento, contrasenia
+- **historial**: carnet_estudiante_id, codigo_curso_id, nota, aprobado (SI/NO), es_semestre (TRUE=semestre, FALSE=vacaciones), fecha_registro
+- **informacion_contacto_estudiante**: carnet_estudiante_id, municipio_id, direccion, correo_institucional, telefono
+
+### Reglas de negocio críticas:
+1. Un curso solo puede asignarse si TODOS sus prerequisitos tienen `aprobado = 'SI'` en el historial.
+2. Límite de repitencias por curso por estudiante:
+   - Máximo **3 intentos en semestre** (`es_semestre = TRUE`)
+   - Máximo **3 intentos en vacaciones** (`es_semestre = FALSE`)
+   - NUNCA puede tener 3 en semestre Y 3 en vacaciones al mismo tiempo (total máximo combinado < 6 pero nunca 3+3)
+3. El curso debe estar disponible en el horario general (viene del Proyecto 1 vía API REST).
+4. No pueden existir traslapes de horario entre cursos asignados.
+5. Priorizar cursos "cuello de botella": los que al ganarse desbloquean más cursos futuros.
+
+### Función de Aptitud del GA:
+El mejor individuo (horario) es aquel que:
+- Maximiza cursos "cuello de botella" asignados (mayor peso)
+- Tiene cursos seguidos/consecutivos en el día (menos huecos)
+- Incluye todos los cursos obligatorios disponibles
+- No tiene traslapes (penalización fuerte si los tiene)
+- Respeta prerequisitos y límites de repitencia
+
+## Lo que necesito que implementes
+
+### 1. TYPES (llenar todos los archivos vacíos en types/)
+
+**genetic-js.d.ts** — Declaración de tipos para la librería genetic-js:
+```typescript
+// Declarar el módulo genetic-js con sus interfaces:
+// GeneticAlgorithmConfig, Genetic (clase base), etc.
+```
+
+**HorarioGeneral.type.ts** — Tipo que viene del Proyecto 1:
+```typescript
+// Un slot de horario general tiene: 
+// id, codigo_curso, nombre_curso, dia (LUNES-VIERNES), 
+// hora_inicio, hora_fin, salon, docente, carrera_id
+```
+
+**CursoDisponible.type.ts** — Curso que el estudiante PUEDE llevar:
+```typescript
+// codigo, nombre, creditos, semestre_pensum, obligatorio,
+// intentos_semestre (cuántas veces lo ha cursado en semestre),
+// intentos_vacaciones, slots_disponibles (HorarioGeneral[]),
+// cursos_que_desbloquea (número — para la función de aptitud),
+// prerequisitos_codigos (number[])
+```
+
+**EstudianteGA.type.ts** — Perfil completo del estudiante para el GA:
+```typescript
+// carnet, carrera_id, cursos_aprobados (Set<number>),
+// cursos_disponibles (CursoDisponible[]),
+// creditos_acumulados, historial_repitencias (Map<number, {semestre:number, vacaciones:number}>)
+```
+
+**Individuo.types.ts** — Un individuo = un horario propuesto:
+```typescript
+// genes: SlotAsignado[] donde SlotAsignado = { curso: CursoDisponible, slot: HorarioGeneral }
+// aptitud: number
+```
+
+**HorarioPersonalizadoGA.type.ts** — Resultado final para el estudiante:
+```typescript
+// cursos_asignados: SlotAsignado[], 
+// aptitud_final: number,
+// conflictos: string[],
+// generacion_convergencia: number
+```
+
+**ConfigGA.type.ts** — Configuración del algoritmo:
+```typescript
+// tamanio_poblacion, max_generaciones, tasa_mutacion, 
+// tasa_cruce, elitismo (boolean), max_cursos_por_horario
+```
+
+**ResultadoGA.type.ts** — Lo que devuelve GaService:
+```typescript
+// horario: HorarioPersonalizadoGA, 
+// estadisticas: { mejor_aptitud_por_generacion: number[], tiempo_ms: number }
+```
+
+### 2. UTILS (crear carpeta y archivos)
+
+**ValidatorPensum.ts**:
+```typescript
+// Clase con métodos estáticos:
+// - cursosAprobados(historial): Set<number>
+// - cursosDisponibles(carrera_id, cursosAprobados, historial): CursoDisponible[]
+//   → Un curso está disponible si TODOS sus prereqs están en cursosAprobados
+// - calcularCursosQueDesbloquea(codigo, todosLosCursos, prereqsMap): number
+//   → Cuenta cuántos cursos futuros se desbloquean si se aprueba este curso
+// - calcularAvanceCarrera(cursosAprobados, totalObligatorios): number (porcentaje)
+// - creditosAcumulados(cursosAprobados, catalogoCursos): number
+```
+
+**ValidadorRestricciones.ts**:
+```typescript
+// Clase con métodos estáticos:
+// - hayTraslape(slot1: HorarioGeneral, slot2: HorarioGeneral): boolean
+// - validarHorario(individuo: Individuo): { valido: boolean, conflictos: string[] }
+// - puedeInscribir(codigo_curso, historial_repitencias, es_vacaciones: boolean): boolean
+//   → Verifica límite de 3 en semestre y 3 en vacaciones
+// - validarPrerequisitos(codigo_curso, cursosAprobados, prereqsMap): boolean
+```
+
+### 3. ALGORITMO GENÉTICO (carpeta genetic/)
+
+**Individuo / gen**: cada gen es un par {curso, slot_horario}. 
+Un individuo representa un horario completo para el semestre.
+
+**Poblacion.ts**:
+```typescript
+// - generarPoblacionInicial(estudiante: EstudianteGA, config: ConfigGA): Individuo[]
+// - Cada individuo se genera eligiendo aleatoriamente slots válidos para los cursos disponibles
+// - Garantizar que no haya traslapes en la generación inicial
+```
+
+**FuncionAptitud.ts**:
+```typescript
+// - calcular(individuo: Individuo, estudiante: EstudianteGA): number
+// Fórmula sugerida:
+// aptitud = Σ(cursos_que_desbloquea[curso] * PESO_CUELLO_BOTELLA)
+//         + (cursos_obligatorios_incluidos * PESO_OBLIGATORIO)
+//         + (bonus_cursos_consecutivos)
+//         - (penalizacion_traslapes * 1000)
+// Pesos recomendados: CUELLO_BOTELLA=10, OBLIGATORIO=5
+```
+
+**Seleccion.ts**:
+```typescript
+// Implementar selección por torneo (tournament selection, k=3)
+// - seleccionar(poblacion: Individuo[], n: number): Individuo[]
+```
+
+**Cruce.ts**:
+```typescript
+// Cruce de un punto sobre los genes (slots asignados)
+// - cruzar(padre1: Individuo, padre2: Individuo): [Individuo, Individuo]
+// - Después del cruce, reparar traslapes si existen (eliminar el conflictivo)
+```
+
+**Mutacion.ts**:
+```typescript
+// - mutar(individuo: Individuo, estudiante: EstudianteGA, tasa: number): Individuo
+// - Tipos de mutación: 
+//   1. Cambiar el slot horario de un curso por otro disponible del mismo curso
+//   2. Reemplazar un curso optativo por otro optativo disponible
+```
+
+**AlgoritmoGenetico.ts**:
+```typescript
+// Clase principal que orquesta todo:
+// - ejecutar(estudiante: EstudianteGA, config: ConfigGA): ResultadoGA
+// - Loop: evaluar → seleccionar → cruzar → mutar → elitismo → siguiente generación
+// - Guardar mejor_aptitud_por_generacion[] para la gráfica de evolución
+// - Criterio de parada: max_generaciones O convergencia (sin mejora en 20 gens)
+```
+
+### 4. MAPPER
+
+**MapperFromHorarioGeneral.ts**:
+```typescript
+// - fromApiResponse(data: any[]): HorarioGeneral[]
+//   → Mapea la respuesta del API del Proyecto 1 al tipo interno
+// - toCursoDisponible(horarios: HorarioGeneral[], cursosPensum, estudiante): CursoDisponible[]
+//   → Agrupa slots por codigo_curso y filtra solo los que el estudiante puede llevar
+```
+
+### 5. SERVICE
+
+**GaService.ts**:
+```typescript
+// Servicio principal que expone el GA al backend:
+// - async generarHorario(carnet: string): Promise<ResultadoGA>
+//   1. Cargar historial del estudiante desde PostgreSQL
+//   2. Determinar cursos disponibles (ValidatorPensum)
+//   3. Llamar al API del Proyecto 1 para obtener HorarioGeneral vigente
+//   4. Mapear datos con MapperFromHorarioGeneral
+//   5. Construir EstudianteGA
+//   6. Ejecutar AlgoritmoGenetico
+//   7. Retornar ResultadoGA
+```
+
+## Restricciones importantes que debes respetar en todo el código:
+1. **NO usar librerías externas de IA** — genetic-js ya está incluida, no agregar otras.
+2. **NO usar redes neuronales ni LLMs**.
+3. El GA debe implementarse desde cero usando genetic-js como base estructural.
+4. Todo en **TypeScript estricto** — no usar `any` salvo donde sea inevitable (mapper de API externa).
+5. Los métodos de ValidadorRestricciones y ValidatorPensum deben ser **puros** (sin side effects).
+6. La función de aptitud debe ser **determinista** dado el mismo individuo y estudiante.
+
+## Orden de implementación sugerido:
+1. Primero los types (base de todo)
+2. ValidatorPensum y ValidadorRestricciones (utils)  
+3. Poblacion.ts (generación inicial)
+4. FuncionAptitud.ts
+5. Seleccion, Cruce, Mutacion
+6. AlgoritmoGenetico.ts (orquestador)
+7. Mapper y Service
+
+## Pregunta inicial:
+¿Puedes empezar implementando los types completos y luego los utils? 
+Después seguimos con el núcleo del GA.

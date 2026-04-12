@@ -53,5 +53,16 @@ export function mapCalendarioACursos(
     });
   }
 
-  return Array.from(mapa.values());
+  // Solo se ofrecen secciones de tipo CLASE al GA.
+  // Las secciones de LABORATORIO (días M, J) no son seleccionables:
+  // no se pueden asignar como horario de curso y causarían resultados inválidos.
+  // Un curso sin ninguna sección CLASE se descarta del pool disponible.
+  const resultado: CursoDisponible[] = [];
+  for (const curso of mapa.values()) {
+    const seccionesClase = curso.secciones.filter(s => s.tipo === 'CLASE');
+    if (seccionesClase.length === 0) continue;
+    resultado.push({ ...curso, secciones: seccionesClase });
+  }
+
+  return resultado;
 }

@@ -1,10 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { authService } from '@/services/auth/auth.service'
-import LoginView       from '@/views/LoginView.vue'
-import EstudianteView  from '@/views/EstudianteView.vue'
-import CargaDatosView  from '@/views/CargaDatosView.vue'
-import PensumView      from '@/views/PensumView.vue'
-import DashboardView   from '@/views/DashboardView.vue'
+import LoginView              from '@/views/LoginView.vue'
+import EstudianteView         from '@/views/EstudianteView.vue'
+import CargaDatosView         from '@/views/CargaDatosView.vue'
+import PensumView             from '@/views/PensumView.vue'
+import DashboardView          from '@/views/DashboardView.vue'
+import HorarioEstudianteView  from '@/views/HorarioEstudianteView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -29,6 +30,11 @@ const router = createRouter({
       path: '/dashboard',
       name: 'dashboard',
       component: DashboardView,
+    },
+    {
+      path: '/horario',
+      name: 'horario',
+      component: HorarioEstudianteView,
     },
     {
       path: '/carga',

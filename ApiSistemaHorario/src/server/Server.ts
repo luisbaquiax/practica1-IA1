@@ -10,6 +10,7 @@ import estudianteRouter  from '../routes/estudianteRoutes';
 import pensumRouter      from '../routes/pensumRoutes';
 import cargaDatosRouter  from '../routes/cargaDatosRoutes';
 import dashboardRouter   from '../routes/dashboardRoutes';
+import gaRouter          from '../routes/gaRoutes';
 
 class Server {
   public app: Application;
@@ -43,6 +44,7 @@ class Server {
     this.app.use('/api/pensum',      pensumRouter);
     this.app.use('/api/carga-datos', cargaDatosRouter);
     this.app.use('/api/dashboard',   dashboardRouter);
+    this.app.use('/api/ga',          gaRouter);
     this.app.use(errorHandler);
   }
 

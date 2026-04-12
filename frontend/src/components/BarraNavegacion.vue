@@ -20,10 +20,11 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-    { title: 'Estudiante', icon: 'mdi-account-circle-outline', to: '/estudiante' },
-    { title: 'Pensum', icon: 'mdi-book-open-variant', to: '/pensum' },
-    { title: 'Control Notas', icon: 'mdi-chart-bar', to: '/dashboard' },
-    { title: 'Carga de Datos', icon: 'mdi-upload', to: '/carga' },
+    { title: 'Estudiante',    icon: 'mdi-account-circle-outline',     to: '/estudiante' },
+    { title: 'Pensum',        icon: 'mdi-book-open-variant',          to: '/pensum'     },
+    { title: 'Control Notas', icon: 'mdi-chart-bar',                  to: '/dashboard'  },
+    { title: 'Mi Horario',    icon: 'mdi-calendar-check',             to: '/horario'    },
+    { title: 'Carga de Datos',icon: 'mdi-upload',                     to: '/carga'      },
 ]
 </script>
 
