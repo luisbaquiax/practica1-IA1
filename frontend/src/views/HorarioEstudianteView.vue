@@ -724,24 +724,10 @@ onMounted(cargarDatos)
             <div class="section-heading">
               <div>
                 <h2 class="section-title mb-1">Horario general de la carrera</h2>
-                <p class="section-copy mb-0">Columnas = aulas, filas = horario. Filtros activos arriba.</p>
               </div>
             </div>
 
             <div class="filter-row mt-4">
-              <v-text-field
-                v-model="filtroCurso"
-                label="Buscar por curso o código"
-                density="comfortable"
-                variant="solo"
-                rounded="lg"
-                hide-details
-                clearable
-                prepend-inner-icon="mdi-magnify"
-                bg-color="#1e3248"
-                style="color:#e8f4fd"
-                class="filter-field"
-              />
               <v-btn-toggle
                 v-model="filtroTipo"
                 mandatory
