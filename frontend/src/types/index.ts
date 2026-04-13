@@ -192,5 +192,11 @@ export interface ResultadoGA {
   evolucionFitness: number[]
   tiempoCómputoMs: number
   conflictos: ConflictoGA[]
+  alternativas: AlternativaGA[]
+}
+
+export interface AlternativaGA {
+  etiqueta: string
+  genes: GenResultado[]
 }
 

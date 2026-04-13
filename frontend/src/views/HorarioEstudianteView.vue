@@ -5,6 +5,7 @@ import { horarioService } from '@/services/horario/horario.service'
 import { pensumService } from '@/services/pensum/pensum.service'
 import { dashboardService } from '@/services/dashboard/dashboard.service'
 import type {
+  AlternativaGA,
   DashboardResponse,
   EntradaCalendario,
   EstudianteSession,
@@ -62,6 +63,8 @@ const filtroCurso = ref('')
 const filtroTipo = ref<FiltroTipo>('todos')
 const zoomLevel = ref(1)
 const dashboard = ref<DashboardResponse | null>(null)
+// -1 = mostrar resultado principal; 0..N = alternativa sin conflictos
+const alternativaIdx = ref(-1)
 
 // ── Repitencias en semestre (es_semestre === 'TRUE') por codigo de curso ──
 // es_semestre en la BD/CSV es 'TRUE' (semestre regular) o 'FALSE' (vacaciones).
@@ -375,8 +378,34 @@ const nombresCursoPorCodigo = computed(() => {
   return map
 })
 
+/** Devuelve los genes activos: de la alternativa seleccionada o del resultado principal */
+const genesActivos = computed(() => {
+  if (!resultadoGA.value) return []
+  const idx = alternativaIdx.value
+  const alternativas = resultadoGA.value.alternativas ?? []
+  if (idx >= 0 && idx < alternativas.length) return alternativas[idx].genes
+  return resultadoGA.value.mejorIndividuo.genes
+})
+
+/**
+ * Extrae la hora de inicio más temprana de un campo horario que puede contener
+ * múltiples bloques y segundos: "LXV 14:30:00-15:20:00, M 10:00:00-11:00:00" → "10:00"
+ */
+function extractHoraMinHorario(horario: string): string {
+  const bloques = horario.split(',')
+  let minHora = '99:99'
+  for (const bloque of bloques) {
+    const partes = bloque.trim().split(' ')
+    if (partes.length < 2) continue
+    const inicioRaw = partes[1].split('-')[0]   // "14:30:00" o "14:30"
+    const hhmm = inicioRaw.substring(0, 5)       // "14:30"
+    if (hhmm < minHora) minHora = hhmm
+  }
+  return minHora
+}
+
 const horarioIdealRows = computed<HorarioIdealRow[]>(() => {
-  return (resultadoGA.value?.mejorIndividuo.genes ?? []).map((gene) => ({
+  const filas = genesActivos.value.map((gene) => ({
     codigo: gene.codigoCurso,
     curso: nombresCursoPorCodigo.value.get(gene.codigoCurso) ?? `Curso ${gene.codigoCurso}`,
     seccion: gene.seccion || '—',
@@ -384,6 +413,7 @@ const horarioIdealRows = computed<HorarioIdealRow[]>(() => {
     salon: gene.salon || '—',
     docente: gene.docente || 'Sin docente asignado',
   }))
+  return filas.sort((a, b) => extractHoraMinHorario(a.horario).localeCompare(extractHoraMinHorario(b.horario)))
 })
 
 async function cargarDatos() {
@@ -455,6 +485,7 @@ async function generarHorarioIdeal() {
       obligatorios,
       opcionales,
     })
+    alternativaIdx.value = -1  // siempre empezar con el resultado principal
 
     const esValido = resultadoGA.value.mejorIndividuo.esValido
     showSnackbar(
@@ -477,6 +508,7 @@ function exportarHorarioIdealPDF() {
     return
   }
 
+  // horarioIdealRows ya viene ordenado por hora (el computed aplica el sort)
   const filas = horarioIdealRows.value.map((row) => `
     <tr>
       <td>${row.codigo}</td>
@@ -1056,6 +1088,37 @@ onMounted(cargarDatos)
                 {{ conflicto.descripcion }}
               </div>
             </v-alert>
+
+            <!-- Selector de alternativas sin conflictos -->
+            <div
+              v-if="resultadoGA && resultadoGA.conflictos.length && resultadoGA.alternativas?.length"
+              class="alternativas-panel mt-4"
+            >
+              <p class="alt-title">Elige una versión para descargar:</p>
+              <div class="alt-chips">
+                <button
+                  class="alt-chip"
+                  :class="{ 'alt-chip--active': alternativaIdx === -1 }"
+                  @click="alternativaIdx = -1"
+                >
+                  <v-icon size="14" class="mr-1">mdi-alert-outline</v-icon>
+                  Resultado original (con conflictos)
+                </button>
+                <button
+                  v-for="(alt, i) in resultadoGA.alternativas"
+                  :key="i"
+                  class="alt-chip alt-chip--ok"
+                  :class="{ 'alt-chip--active': alternativaIdx === i }"
+                  @click="alternativaIdx = i"
+                >
+                  <v-icon size="14" class="mr-1">mdi-check-circle-outline</v-icon>
+                  {{ alt.etiqueta }}
+                </button>
+              </div>
+              <p v-if="alternativaIdx >= 0" class="alt-nota">
+                Mostrando alternativa {{ alternativaIdx + 1 }}: <strong>{{ resultadoGA.alternativas[alternativaIdx].etiqueta }}</strong>
+              </p>
+            </div>
 
             <div v-if="resultadoGA" class="result-summary mt-4">
               <div>
@@ -1659,5 +1722,66 @@ onMounted(cargarDatos)
   padding: 22px;
   text-align: center;
   color: #6d7b88;
+}
+
+/* ── Alternativas de horario ── */
+.alternativas-panel {
+  background: #0f2336;
+  border: 1px solid #1e3a5c;
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+.alt-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #a8c7e8;
+  margin: 0 0 10px;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+.alt-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.alt-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1px solid #2e4a6a;
+  background: #162030;
+  color: #8fa8c0;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background .18s, color .18s, border-color .18s;
+}
+.alt-chip:hover {
+  background: #1e3a5c;
+  color: #d0e9ff;
+}
+.alt-chip--ok {
+  border-color: #1a5c3a;
+  color: #5ece94;
+}
+.alt-chip--ok:hover {
+  background: #0f3a25;
+  color: #8fffbf;
+}
+.alt-chip--active {
+  background: #1e4d80;
+  color: #ffffff;
+  border-color: #3b82c4;
+  font-weight: 700;
+}
+.alt-chip--ok.alt-chip--active {
+  background: #0f5c35;
+  border-color: #2ecc71;
+  color: #ffffff;
+}
+.alt-nota {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: #8fffbf;
 }
 </style>
