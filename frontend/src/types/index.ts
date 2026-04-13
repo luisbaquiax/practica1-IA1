@@ -46,6 +46,7 @@ export interface CursoConEstado {
   obligatorio: boolean
   estado: EstadoCurso
   prerequisitos: number[]
+  intentosFallidos: number
 }
 
 export interface PensumResponse {

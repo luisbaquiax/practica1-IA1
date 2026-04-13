@@ -3,7 +3,9 @@ import { computed, onMounted, ref } from 'vue'
 import { authService } from '@/services/auth/auth.service'
 import { horarioService } from '@/services/horario/horario.service'
 import { pensumService } from '@/services/pensum/pensum.service'
+import { dashboardService } from '@/services/dashboard/dashboard.service'
 import type {
+  DashboardResponse,
   EntradaCalendario,
   EstudianteSession,
   HorarioGenerado,
@@ -23,6 +25,7 @@ interface CursoDisponibleRow {
   horarioTexto: string
   horarioEntradas: string[]
   tieneHorario: boolean
+  intentosFallidos: number
 }
 
 interface FranjaHorario {
@@ -58,6 +61,40 @@ const opcionalesSeleccionados = ref<number[]>([])
 const filtroCurso = ref('')
 const filtroTipo = ref<FiltroTipo>('todos')
 const zoomLevel = ref(1)
+const dashboard = ref<DashboardResponse | null>(null)
+
+// ── Repitencias en semestre (es_semestre === 'TRUE') por codigo de curso ──
+// es_semestre en la BD/CSV es 'TRUE' (semestre regular) o 'FALSE' (vacaciones).
+// La regla aplica solo a intentos en semestre regular.
+const repitenciasSemestre = computed<Map<number, number>>(() => {
+  const map = new Map<number, number>()
+  const historial = dashboard.value?.registrosHistorial ?? []
+  for (const reg of historial) {
+    const esSemestre = String(reg.semestre).toUpperCase() === 'TRUE'
+    if (!reg.aprobado && esSemestre) {
+      map.set(reg.codigo, (map.get(reg.codigo) ?? 0) + 1)
+    }
+  }
+  return map
+})
+
+// Códigos que ya tienen 3 semestres perdidos → bloqueados del GA
+const codigosAgotadosSemestre = computed<Set<number>>(() => {
+  const set = new Set<number>()
+  repitenciasSemestre.value.forEach((count, codigo) => {
+    if (count >= 3) set.add(codigo)
+  })
+  return set
+})
+
+// Cursos con exactamente 2 semestres perdidos → advertencia de último intento
+const codigosUltimoIntento = computed<Set<number>>(() => {
+  const set = new Set<number>()
+  repitenciasSemestre.value.forEach((count, codigo) => {
+    if (count === 2) set.add(codigo)
+  })
+  return set
+})
 
 // ── Diálogo horario publicado ──
 const dialogHorario = ref(false)
@@ -262,6 +299,7 @@ const cursosDisponibles = computed<CursoDisponibleRow[]>(() => {
         horarioTexto: horarioTexto(entradas),
         horarioEntradas,
         tieneHorario: entradas.length > 0,
+        intentosFallidos: curso.intentosFallidos ?? 0,
       }
     })
     .sort((a, b) => a.semestre - b.semestre || a.nombre.localeCompare(b.nombre))
@@ -359,13 +397,15 @@ async function cargarDatos() {
   cargando.value = true
 
   try {
-    const [pensumResponse, horarioResponse] = await Promise.all([
+    const [pensumResponse, horarioResponse, dashboardResponse] = await Promise.all([
       pensumService.getPensumByCarnet(sesionActual.carnet),
       horarioService.obtenerUltimaSolucion().catch(() => null),
+      dashboardService.getDashboardByCarnet(sesionActual.carnet).catch(() => null),
     ])
 
     pensum.value = pensumResponse
     horarioGeneral.value = horarioResponse
+    dashboard.value = dashboardResponse
     restaurarSeleccion()
 
     if (!horarioResponse) {
@@ -385,17 +425,21 @@ async function generarHorarioIdeal() {
     return
   }
 
-  const obligatorios = cursosObligatorios.value.map((curso) => ({
-    codigo: curso.codigo,
-    nombre: curso.nombre,
-    creditos: curso.creditos,
-  }))
+  const obligatorios = cursosObligatorios.value
+    .filter((curso) => !codigosAgotadosSemestre.value.has(curso.codigo))
+    .map((curso) => ({
+      codigo: curso.codigo,
+      nombre: curso.nombre,
+      creditos: curso.creditos,
+    }))
 
-  const opcionales = opcionalesSeleccionadosRows.value.map((curso) => ({
-    codigo: curso.codigo,
-    nombre: curso.nombre,
-    creditos: curso.creditos,
-  }))
+  const opcionales = opcionalesSeleccionadosRows.value
+    .filter((curso) => !codigosAgotadosSemestre.value.has(curso.codigo))
+    .map((curso) => ({
+      codigo: curso.codigo,
+      nombre: curso.nombre,
+      creditos: curso.creditos,
+    }))
 
   if (!obligatorios.length && !opcionales.length) {
     showSnackbar('No hay cursos seleccionados para generar el horario ideal', 'warning')
@@ -605,7 +649,55 @@ onMounted(cargarDatos)
             No fue posible cargar el pensum del estudiante.
           </v-alert>
 
-          <section v-else class="section-card">
+          <!-- Alerta: cursos con 3 fallos — no pueden cursarse en semestre -->
+          <v-alert
+            v-if="codigosAgotadosSemestre.size > 0"
+            type="error"
+            variant="tonal"
+            rounded="xl"
+            icon="mdi-cancel"
+            prominent
+          >
+            <div class="mb-2">
+              <strong>No puedes inscribir los siguientes cursos este semestre.</strong>
+              Ya los has reprobado 3 veces en semestre. Solo puedes llevarlos en vacaciones.
+            </div>
+            <div
+              v-for="codigo in [...codigosAgotadosSemestre]"
+              :key="codigo"
+              class="repitencia-item"
+            >
+              <v-icon icon="mdi-book-remove" size="15" />
+              {{ nombresCursoPorCodigo.get(codigo) ?? `Curso ${codigo}` }}
+              <span class="repitencia-badge-codigo">({{ codigo }})</span>
+            </div>
+          </v-alert>
+
+          <!-- Alerta: cursos con 2 fallos — último intento en semestre -->
+          <v-alert
+            v-if="codigosUltimoIntento.size > 0"
+            type="warning"
+            variant="tonal"
+            rounded="xl"
+            icon="mdi-alert-circle-outline"
+            prominent
+          >
+            <div class="mb-2">
+              <strong>Última oportunidad de llevar estos cursos en semestre.</strong>
+              Si los repruebas este semestre, solo podrás tomarlos en vacaciones.
+            </div>
+            <div
+              v-for="codigo in [...codigosUltimoIntento]"
+              :key="codigo"
+              class="repitencia-item"
+            >
+              <v-icon icon="mdi-book-alert" size="15" />
+              {{ nombresCursoPorCodigo.get(codigo) ?? `Curso ${codigo}` }}
+              <span class="repitencia-badge-codigo">({{ codigo }})</span>
+            </div>
+          </v-alert>
+
+          <section v-if="pensum" class="section-card">
             <div class="section-heading">
               <div>
                 <h2 class="section-title mb-1">Cursos obligatorios</h2>
@@ -623,10 +715,18 @@ onMounted(cargarDatos)
                     <th>Semestre</th>
                     <th>Créditos</th>
                     <th>Horario publicado</th>
+                    <th>Estado</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="curso in cursosObligatorios" :key="curso.codigo">
+                  <tr
+                    v-for="curso in cursosObligatorios"
+                    :key="curso.codigo"
+                    :class="{
+                      'row-ultimo-intento': codigosUltimoIntento.has(curso.codigo),
+                      'row-agotado': codigosAgotadosSemestre.has(curso.codigo),
+                    }"
+                  >
                     <td>{{ curso.codigo }}</td>
                     <td>{{ curso.nombre }}</td>
                     <td>{{ curso.semestre }}</td>
@@ -643,16 +743,27 @@ onMounted(cargarDatos)
                       >Ver horario</v-btn>
                       <span v-else class="text-muted">Sin horario</span>
                     </td>
+                    <td class="estado-col">
+                      <span v-if="codigosAgotadosSemestre.has(curso.codigo)" class="badge-agotado">
+                        <v-icon icon="mdi-close-circle" size="14" /> Sin cupos en semestre
+                      </span>
+                      <span v-else-if="codigosUltimoIntento.has(curso.codigo)" class="badge-advertencia">
+                        <v-icon icon="mdi-alert" size="14" /> Último intento
+                      </span>
+                      <span v-else class="badge-ok">
+                        <v-icon icon="mdi-check-circle" size="14" /> OK
+                      </span>
+                    </td>
                   </tr>
                   <tr v-if="!cursosObligatorios.length">
-                    <td colspan="5" class="empty-cell">No hay cursos obligatorios disponibles.</td>
+                    <td colspan="6" class="empty-cell">No hay cursos obligatorios disponibles.</td>
                   </tr>
                 </tbody>
               </v-table>
             </div>
           </section>
 
-          <section class="section-card">
+          <section v-if="pensum" class="section-card">
             <div class="section-heading">
               <div>
                 <h2 class="section-title mb-1">Cursos opcionales</h2>
@@ -673,13 +784,18 @@ onMounted(cargarDatos)
                     <th>Semestre</th>
                     <th>Créditos</th>
                     <th>Horario publicado</th>
+                    <th>Estado</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr
                     v-for="curso in cursosOpcionales"
                     :key="curso.codigo"
-                    :class="{ 'row-selected': estaSeleccionado(curso.codigo) }"
+                    :class="{
+                      'row-selected': estaSeleccionado(curso.codigo),
+                      'row-ultimo-intento': codigosUltimoIntento.has(curso.codigo),
+                      'row-agotado': codigosAgotadosSemestre.has(curso.codigo),
+                    }"
                     @click="toggleOpcional(curso.codigo)"
                   >
                     <td class="checkbox-col">
@@ -707,9 +823,20 @@ onMounted(cargarDatos)
                       >Ver horario</v-btn>
                       <span v-else class="text-muted">Sin horario</span>
                     </td>
+                    <td class="estado-col">
+                      <span v-if="codigosAgotadosSemestre.has(curso.codigo)" class="badge-agotado">
+                        <v-icon icon="mdi-close-circle" size="14" /> Sin cupos en semestre
+                      </span>
+                      <span v-else-if="codigosUltimoIntento.has(curso.codigo)" class="badge-advertencia">
+                        <v-icon icon="mdi-alert" size="14" /> Último intento
+                      </span>
+                      <span v-else class="badge-ok">
+                        <v-icon icon="mdi-check-circle" size="14" /> OK
+                      </span>
+                    </td>
                   </tr>
                   <tr v-if="!cursosOpcionales.length">
-                    <td colspan="6" class="empty-cell">No hay cursos opcionales disponibles.</td>
+                    <td colspan="7" class="empty-cell">No hay cursos opcionales disponibles.</td>
                   </tr>
                 </tbody>
               </v-table>
@@ -873,6 +1000,49 @@ onMounted(cargarDatos)
                 Exportar PDF
               </v-btn>
             </div>
+
+            <!-- Aviso: cursos con último intento en semestre -->
+            <v-alert
+              v-if="codigosUltimoIntento.size > 0"
+              type="warning"
+              variant="tonal"
+              rounded="lg"
+              class="mt-4"
+              icon="mdi-alert-outline"
+            >
+              <div class="mb-1"><strong>Advertencia — Último intento en semestre:</strong></div>
+              <div
+                v-for="codigo in [...codigosUltimoIntento]"
+                :key="codigo"
+                class="repitencia-item"
+              >
+                <v-icon icon="mdi-book-alert" size="15" />
+                {{ nombresCursoPorCodigo.get(codigo) ?? `Curso ${codigo}` }} ({{ codigo }}) — Si lo repruebas este semestre solo podrás llevarlo en vacaciones.
+              </div>
+            </v-alert>
+
+            <!-- Aviso: cursos excluidos del GA por 3 semestres perdidos -->
+            <v-alert
+              v-if="codigosAgotadosSemestre.size > 0"
+              type="error"
+              variant="tonal"
+              rounded="lg"
+              class="mt-3"
+              icon="mdi-cancel"
+            >
+              <div class="mb-1"><strong>Cursos excluidos del horario ideal:</strong></div>
+              <div class="mb-1" style="font-size:0.85rem;opacity:0.85">
+                Agotaste los 3 intentos en semestre. Solo pueden cursarse en vacaciones (fuera de este ciclo).
+              </div>
+              <div
+                v-for="codigo in [...codigosAgotadosSemestre]"
+                :key="codigo"
+                class="repitencia-item"
+              >
+                <v-icon icon="mdi-book-remove" size="15" />
+                {{ nombresCursoPorCodigo.get(codigo) ?? `Curso ${codigo}` }} ({{ codigo }})
+              </div>
+            </v-alert>
 
             <v-alert
               v-if="resultadoGA && resultadoGA.conflictos.length"
@@ -1074,6 +1244,62 @@ onMounted(cargarDatos)
 
 .row-selected {
   background: #cce3f9 !important;
+}
+
+.row-ultimo-intento td {
+  background: #fff8e1 !important;
+}
+
+.row-agotado td {
+  background: #fce4ec !important;
+  opacity: 0.75;
+}
+
+/* ── Estado badges ── */
+.estado-col {
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.badge-ok,
+.badge-advertencia,
+.badge-agotado {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 8px;
+}
+
+.badge-ok {
+  color: #1b5e20;
+  background: #e8f5e9;
+}
+
+.badge-advertencia {
+  color: #e65100;
+  background: #fff3e0;
+}
+
+.badge-agotado {
+  color: #b71c1c;
+  background: #ffebee;
+}
+
+/* ── Items en alertas de repitencia ── */
+.repitencia-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  padding: 3px 0;
+}
+
+.repitencia-badge-codigo {
+  opacity: 0.65;
+  font-size: 0.8rem;
 }
 
 .empty-cell {

@@ -14,10 +14,4 @@ import '../models/Prerequisito';
 import '../models/TipoEstudiante';
 
 
-// Sincronizar para crear tablas si no existen
-sequelize
-  .sync({ alter: false })
-  .then(() => console.log('✅ Modelos sincronizados con la base de datos.'))
-  .catch((err) => console.error('❌ Error al sincronizar modelos:', err));
-
 export default sequelize;

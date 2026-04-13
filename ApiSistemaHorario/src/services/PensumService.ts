@@ -47,11 +47,21 @@ const getPensumByCarnet = async (carnet: number): Promise<PensumResponse> => {
     },
   });
 
-  // 6. Obtener historial aprobado del estudiante
+  // 6. Obtener historial completo del estudiante
   const historial = await Historial.findAll({
-    where: { carnet_estudiante_id: carnet, aprobado: true },
+    where: { carnet_estudiante_id: carnet },
   });
-  const aprobados = new Set(historial.map(h => h.codigo_curso_id));
+  const aprobados = new Set(
+    historial.filter(h => h.aprobado).map(h => h.codigo_curso_id),
+  );
+
+  // Contar intentos fallidos por curso
+  const fallidosMap = new Map<number, number>();
+  for (const h of historial) {
+    if (!h.aprobado) {
+      fallidosMap.set(h.codigo_curso_id, (fallidosMap.get(h.codigo_curso_id) ?? 0) + 1);
+    }
+  }
 
   // 7. Construir mapa de prerequisitos: codigo_curso → [codigos de prereqs]
   const prereqMap = new Map<number, number[]>();
@@ -85,6 +95,7 @@ const getPensumByCarnet = async (carnet: number): Promise<PensumResponse> => {
       obligatorio: ccMap.get(c.codigo)?.es_obligatorio ?? false,
       estado,
       prerequisitos: prereqs,
+      intentosFallidos: fallidosMap.get(c.codigo) ?? 0,
     };
   });
 

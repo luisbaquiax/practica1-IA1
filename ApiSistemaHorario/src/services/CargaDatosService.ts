@@ -172,11 +172,12 @@ const importarExtras = async (
   // 4. Importar historial
   for (const row of historialRows) {
     try {
+      const fechaRegistro = parseDate(row.fecha_registro)
       await Historial.findOrCreate({
         where: {
           carnet_estudiante_id: Number(row.carnet_estudiante_id),
           codigo_curso_id:      Number(row.codigo_curso_id),
-          es_semestre:          row.es_semestre,
+          fecha_registro:       fechaRegistro as unknown as Date,
         },
         defaults: {
           carnet_estudiante_id: Number(row.carnet_estudiante_id),
@@ -184,12 +185,12 @@ const importarExtras = async (
           nota:                 Number(row.nota) || 0,
           aprobado:             ['true', '1', 'TRUE', 'si', 'SI'].includes(String(row.aprobado)),
           es_semestre:          row.es_semestre,
-          fecha_registro:       parseDate(row.fecha_registro) as unknown as Date,
+          fecha_registro:       fechaRegistro as unknown as Date,
         },
-      });
-      result.historialCreados++;
+      })
+      result.historialCreados++
     } catch (e: any) {
-      result.errores.push(`Historial ${row.carnet_estudiante_id}/${row.codigo_curso_id}: ${e.message}`);
+      result.errores.push(`Historial ${row.carnet_estudiante_id}/${row.codigo_curso_id}: ${e.message}`)
     }
   }
 
