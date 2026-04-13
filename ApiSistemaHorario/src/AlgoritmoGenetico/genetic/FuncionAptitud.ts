@@ -9,6 +9,8 @@ const PESO_CUELLO_BOTELLA = 15;
 const PESO_OBLIGATORIO    = 20;
 const PESO_SEMESTRE_BAJO  = 5;
 const PENALIZACION_TRASLAPE = 300;
+// Premio por incluir cada curso adicional (incentiva maximizar la cantidad)
+const PESO_CANTIDAD = 40;
 
 export class FuncionAptitud {
 
@@ -32,6 +34,9 @@ export class FuncionAptitud {
 
       // Priorizar semestres más bajos (avance de carrera)
       score += Math.max(0, 10 - curso.semestre) * PESO_SEMESTRE_BAJO;
+
+      // Premio por incluir este curso (incentiva maximizar cantidad)
+      score += PESO_CANTIDAD;
     }
 
     // Penalización fuerte por traslapes

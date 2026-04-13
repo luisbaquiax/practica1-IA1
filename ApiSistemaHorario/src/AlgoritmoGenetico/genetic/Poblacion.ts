@@ -22,18 +22,22 @@ export class Poblacion {
   }
 
   /**
-   * Crea un individuo aleatorio seleccionando como máximo `maxCursos` cursos
-   * del pool disponible (orden aleatorio para diversidad en la población).
+   * Crea un individuo aleatorio seleccionando como máximo `maxCursos` cursos.
+   * Los obligatorios siempre van primero para garantizar que estén en el individuo.
+   * Los opcionales se mezclan aleatoriamente para diversidad entre individuos.
    */
   static seedAleatorio(estudiante: EstudianteGA, maxCursos: number): GenGA[] {
-    // Mezcla aleatoria del pool para garantizar diversidad entre individuos
-    const pool = [...estudiante.cursosDisponibles];
-    for (let i = pool.length - 1; i > 0; i--) {
+    const obligatorios = estudiante.cursosDisponibles.filter(c => c.esObligatorio);
+    const opcionales = estudiante.cursosDisponibles.filter(c => !c.esObligatorio);
+
+    // Mezcla aleatoria de opcionales para diversidad entre individuos
+    for (let i = opcionales.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [pool[i], pool[j]] = [pool[j], pool[i]];
+      [opcionales[i], opcionales[j]] = [opcionales[j], opcionales[i]];
     }
 
-    const seleccionados = pool.slice(0, Math.min(maxCursos, pool.length));
+    // Obligatorios siempre primero; se completa con opcionales hasta el límite
+    const seleccionados = [...obligatorios, ...opcionales].slice(0, Math.min(maxCursos, estudiante.cursosDisponibles.length));
 
     return seleccionados.map(curso => ({
       codigoCurso: curso.codigo,
