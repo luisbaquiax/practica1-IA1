@@ -5,7 +5,6 @@ import { horarioService } from '@/services/horario/horario.service'
 import { pensumService } from '@/services/pensum/pensum.service'
 import { dashboardService } from '@/services/dashboard/dashboard.service'
 import type {
-  AlternativaGA,
   ConfigGA,
   DashboardResponse,
   EntradaCalendario,
@@ -391,7 +390,7 @@ const genesActivos = computed(() => {
   if (!resultadoGA.value) return []
   const idx = alternativaIdx.value
   const alternativas = resultadoGA.value.alternativas ?? []
-  if (idx >= 0 && idx < alternativas.length) return alternativas[idx].genes
+  if (idx >= 0 && idx < alternativas.length) return alternativas[idx]?.genes ?? []
   return resultadoGA.value.mejorIndividuo.genes
 })
 
@@ -405,7 +404,7 @@ function extractHoraMinHorario(horario: string): string {
   for (const bloque of bloques) {
     const partes = bloque.trim().split(' ')
     if (partes.length < 2) continue
-    const inicioRaw = partes[1].split('-')[0]   // "14:30:00" o "14:30"
+    const inicioRaw = partes[1]?.split('-')[0] ?? '99:99'  // "14:30:00" o "14:30"
     const hhmm = inicioRaw.substring(0, 5)       // "14:30"
     if (hhmm < minHora) minHora = hhmm
   }
@@ -1212,7 +1211,7 @@ onMounted(cargarDatos)
                 </button>
               </div>
               <p v-if="alternativaIdx >= 0" class="alt-nota">
-                Mostrando alternativa {{ alternativaIdx + 1 }}: <strong>{{ resultadoGA.alternativas[alternativaIdx].etiqueta }}</strong>
+                Mostrando alternativa {{ alternativaIdx + 1 }}: <strong>{{ resultadoGA.alternativas[alternativaIdx]?.etiqueta }}</strong>
               </p>
             </div>
 
@@ -1238,7 +1237,7 @@ onMounted(cargarDatos)
                 Imprimir horario
               </button>
               <span v-if="alternativaIdx >= 0" class="print-label">
-                Se imprimirá: Alternativa {{ alternativaIdx + 1 }} — {{ resultadoGA.alternativas[alternativaIdx].etiqueta }}
+                Se imprimirá: Alternativa {{ alternativaIdx + 1 }} — {{ resultadoGA.alternativas[alternativaIdx]?.etiqueta }}
               </span>
               <span v-else class="print-label">
                 Se imprimirá: Resultado original
