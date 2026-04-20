@@ -8,6 +8,6 @@ export interface ConfigGA {
 
     // Métodos elegidos por el usuario
     metodoSeleccion: "torneo" | "ruleta";
-    metodoCruce: "un_punto" | "multipunto" | "mascara_aleatoria";
+    metodoCruce: "un_punto" | "multipunto";
     metodoMutacion: "intercambio" | "random_resetting";
 }

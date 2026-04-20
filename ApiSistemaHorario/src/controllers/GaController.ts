@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import asyncHandler from 'express-async-handler';
 import { GaService, SeleccionEstudiante } from '../AlgoritmoGenetico/services/GaService';
+import { ConfigGA } from '../AlgoritmoGenetico/types/ConfigGA.type';
 
 const gaService = new GaService();
 
@@ -9,7 +10,7 @@ const gaService = new GaService();
  * Body: { carnet, obligatorios: [{codigo, nombre, creditos}], opcionales: [{codigo, nombre, creditos}] }
  */
 export const generarHorarioPersonalizado = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  const { carnet, obligatorios, opcionales } = req.body as SeleccionEstudiante;
+  const { carnet, obligatorios, opcionales, config } = req.body as SeleccionEstudiante & { config?: Partial<ConfigGA> };
 
   if (!carnet || !Array.isArray(obligatorios) || !Array.isArray(opcionales)) {
     res.status(400).json({ error: 'Cuerpo inválido. Se requiere carnet, obligatorios[] y opcionales[].' });
@@ -21,6 +22,6 @@ export const generarHorarioPersonalizado = asyncHandler(async (req: Request, res
     return;
   }
 
-  const resultado = await gaService.generarHorarioPersonalizado({ carnet, obligatorios, opcionales });
+  const resultado = await gaService.generarHorarioPersonalizado({ carnet, obligatorios, opcionales }, config as ConfigGA | undefined);
   res.json(resultado);
 });

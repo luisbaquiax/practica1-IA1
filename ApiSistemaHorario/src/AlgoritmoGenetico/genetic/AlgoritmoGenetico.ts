@@ -75,7 +75,7 @@ export class AlgoritmoGenetico {
     const cursoMap = new Map(estudiante.cursosDisponibles.map(c => [c.codigo, c]));
     const genesFinales = mejorGlobal.genes;
 
-    const MAX_CURSOS_RESULTADO = 9;
+    const MAX_CURSOS_RESULTADO = config.maxCursosPorHorario;
 
     // Deduplicar por codigoCurso antes de construir el resultado final
     const genesUnicos = genesFinales.filter(
@@ -154,7 +154,7 @@ export class AlgoritmoGenetico {
 
     if (pares.length === 0) return [];
     // Evitar explosión combinatoria para casos extremos
-    if (pares.length > 8) return [];
+    if (pares.length > 20) return [];
 
     /**
      * Generación recursiva de conjuntos de exclusión.
@@ -207,7 +207,9 @@ export class AlgoritmoGenetico {
       });
     }
 
-    return resultado;
+    // Ordenar por más cursos conservados (mejor alternativa primero) y limitar a 6
+    resultado.sort((a, b) => b.genes.length - a.genes.length);
+    return resultado.slice(0, 6);
   }
 
   private ordenar(poblacion: IndividuoInterno[]): void {
@@ -226,7 +228,7 @@ export class AlgoritmoGenetico {
     estudiante: EstudianteGA,
     config: ConfigGA,
   ): [IndividuoInterno, IndividuoInterno] {
-    if (config.metodoCruce === 'multipunto' || config.metodoCruce === 'mascara_aleatoria') {
+    if (config.metodoCruce === 'multipunto') {
       return Cruce.multipunto(p1, p2, estudiante);
     }
     return Cruce.unPunto(p1, p2, estudiante);

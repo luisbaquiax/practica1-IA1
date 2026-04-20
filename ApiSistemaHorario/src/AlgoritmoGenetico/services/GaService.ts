@@ -16,10 +16,10 @@ const GA_API_URL = process.env.GA_API_URL ?? "http://localhost:3000";
 const CONFIG_DEFAULT: ConfigGA = {
   tamanioPoblacion:   60,
   maxGeneraciones:    150,
-  tasaMutacion:       0.1,
+  tasaMutacion:       0.05,
   tasaCruce:          0.8,
   elitismo:           2,
-  maxCursosPorHorario: 9,
+  maxCursosPorHorario: 20,
   metodoSeleccion:    "torneo",
   metodoCruce:        "un_punto",
   metodoMutacion:     "intercambio",
@@ -35,8 +35,9 @@ export class GaService {
 
   async generarHorarioPersonalizado(
     seleccion: SeleccionEstudiante,
-    config: ConfigGA = CONFIG_DEFAULT,
+    configOverride?: ConfigGA,
   ): Promise<ResultadoGA> {
+    const config: ConfigGA = { ...CONFIG_DEFAULT, ...configOverride };
 
     // 1. Verificar que el estudiante exista
     const estudiante = await Estudiante.findByPk(seleccion.carnet);

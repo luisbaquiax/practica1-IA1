@@ -48,6 +48,7 @@ const tableHeaders = [
   { title: 'Semestre',  key: 'semestre', sortable: true, width: '140px' },
   { title: 'Nota',      key: 'nota',     sortable: true, width: '90px'  },
   { title: 'Estado',    key: 'aprobado', sortable: true, width: '120px' },
+  { title: 'Fecha',     key: 'fecha',    sortable: true, width: '120px' },
 ]
 
 const registrosFiltrados = computed(() => {
@@ -599,6 +600,10 @@ onMounted(cargarDashboard)
                       >
                         {{ item.aprobado ? 'Ganado' : 'Perdido' }}
                       </v-chip>
+                    </template>
+
+                    <template #[`item.fecha`]="{ item }">
+                      <span class="text-caption">{{ item.fecha }}</span>
                     </template>
 
                     <template #no-data>

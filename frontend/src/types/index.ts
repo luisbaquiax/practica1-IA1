@@ -86,6 +86,7 @@ export interface RegistroHistorial {
   semestre: string
   nota: number
   aprobado: boolean
+  fecha: string
 }
 
 export interface DashboardResponse {
@@ -162,10 +163,19 @@ export interface CursoSeleccionado {
   creditos: number
 }
 
+export interface ConfigGA {
+  maxCursosPorHorario: number
+  maxGeneraciones: number
+  metodoSeleccion: 'torneo' | 'ruleta'
+  metodoCruce: 'un_punto' | 'multipunto'
+  metodoMutacion: 'intercambio' | 'random_resetting'
+}
+
 export interface SeleccionInscripcion {
   carnet: number
   obligatorios: CursoSeleccionado[]
   opcionales: CursoSeleccionado[]
+  config?: ConfigGA
 }
 
 export interface GenResultado {

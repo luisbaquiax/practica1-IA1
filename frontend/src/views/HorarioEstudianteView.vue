@@ -6,6 +6,7 @@ import { pensumService } from '@/services/pensum/pensum.service'
 import { dashboardService } from '@/services/dashboard/dashboard.service'
 import type {
   AlternativaGA,
+  ConfigGA,
   DashboardResponse,
   EntradaCalendario,
   EstudianteSession,
@@ -65,6 +66,13 @@ const zoomLevel = ref(1)
 const dashboard = ref<DashboardResponse | null>(null)
 // -1 = mostrar resultado principal; 0..N = alternativa sin conflictos
 const alternativaIdx = ref(-1)
+
+// ── Configuración del AG ──
+const gaMetodoSeleccion = ref<'torneo' | 'ruleta'>('torneo')
+const gaMetodoCruce = ref<'un_punto' | 'multipunto'>('un_punto')
+const gaMetodoMutacion = ref<'intercambio' | 'random_resetting'>('intercambio')
+const gaMaxCursos = ref(12)
+const gaMaxGeneraciones = ref(150)
 
 // ── Repitencias en semestre (es_semestre === 'TRUE') por codigo de curso ──
 // es_semestre en la BD/CSV es 'TRUE' (semestre regular) o 'FALSE' (vacaciones).
@@ -484,6 +492,13 @@ async function generarHorarioIdeal() {
       carnet: sesion.value.carnet,
       obligatorios,
       opcionales,
+      config: {
+        maxCursosPorHorario: gaMaxCursos.value,
+        maxGeneraciones: gaMaxGeneraciones.value,
+        metodoSeleccion: gaMetodoSeleccion.value,
+        metodoCruce: gaMetodoCruce.value,
+        metodoMutacion: gaMetodoMutacion.value,
+      } satisfies ConfigGA,
     })
     alternativaIdx.value = -1  // siempre empezar con el resultado principal
 
@@ -524,6 +539,9 @@ function exportarHorarioIdealPDF() {
   const carrera = sesion.value?.carrera ?? pensum.value?.carrera ?? 'Sin carrera'
   const fitness = resultadoGA.value?.mejorIndividuo.fitness ?? 0
   const estado = resultadoGA.value?.mejorIndividuo.esValido ? 'Sin conflictos' : 'Con conflictos'
+  const altLabel = alternativaIdx.value >= 0
+    ? `Alternativa ${alternativaIdx.value + 1}: ${resultadoGA.value?.alternativas[alternativaIdx.value]?.etiqueta ?? ''}`
+    : 'Resultado original'
 
   const html = `<!DOCTYPE html>
   <html lang="es">
@@ -546,6 +564,7 @@ function exportarHorarioIdealPDF() {
       <p><strong>Carrera:</strong> ${escapeHtml(carrera)}</p>
       <p><strong>Fecha:</strong> ${escapeHtml(new Date().toLocaleString('es-GT'))}</p>
       <p><strong>Fitness:</strong> ${fitness.toFixed(0)} | <strong>Estado:</strong> ${escapeHtml(estado)}</p>
+      <p><strong>Versión:</strong> ${escapeHtml(altLabel)}</p>
       <table>
         <thead>
           <tr>
@@ -1008,6 +1027,94 @@ onMounted(cargarDatos)
               </div>
             </div>
 
+            <!-- Panel de configuración del AG -->
+            <div class="ga-config-panel mt-4">
+              <p class="ga-config-title">Configuración del algoritmo genético</p>
+              <div class="ga-config-grid">
+
+                <div class="ga-config-group">
+                  <label class="ga-config-label">Selección</label>
+                  <div class="ga-toggle-group">
+                    <button
+                      class="ga-toggle"
+                      :class="{ 'ga-toggle--active': gaMetodoSeleccion === 'torneo' }"
+                      @click="gaMetodoSeleccion = 'torneo'"
+                    >Torneo</button>
+                    <button
+                      class="ga-toggle"
+                      :class="{ 'ga-toggle--active': gaMetodoSeleccion === 'ruleta' }"
+                      @click="gaMetodoSeleccion = 'ruleta'"
+                    >Ruleta</button>
+                  </div>
+                  <span class="ga-config-hint">
+                    <template v-if="gaMetodoSeleccion === 'torneo'">Compara k individuos al azar y elige el mejor.</template>
+                    <template v-else>La probabilidad de ser elegido es proporcional al fitness.</template>
+                  </span>
+                </div>
+
+                <div class="ga-config-group">
+                  <label class="ga-config-label">Cruce</label>
+                  <div class="ga-toggle-group">
+                    <button
+                      class="ga-toggle"
+                      :class="{ 'ga-toggle--active': gaMetodoCruce === 'un_punto' }"
+                      @click="gaMetodoCruce = 'un_punto'"
+                    >Un punto</button>
+                    <button
+                      class="ga-toggle"
+                      :class="{ 'ga-toggle--active': gaMetodoCruce === 'multipunto' }"
+                      @click="gaMetodoCruce = 'multipunto'"
+                    >Multipunto</button>
+                  </div>
+                  <span class="ga-config-hint">
+                    <template v-if="gaMetodoCruce === 'un_punto'">Divide el cromosoma en un punto y combina ambas mitades.</template>
+                    <template v-else>Divide en dos puntos, intercambiando el segmento central.</template>
+                  </span>
+                </div>
+
+                <div class="ga-config-group">
+                  <label class="ga-config-label">Mutación</label>
+                  <div class="ga-toggle-group">
+                    <button
+                      class="ga-toggle"
+                      :class="{ 'ga-toggle--active': gaMetodoMutacion === 'intercambio' }"
+                      @click="gaMetodoMutacion = 'intercambio'"
+                    >Intercambio</button>
+                    <button
+                      class="ga-toggle"
+                      :class="{ 'ga-toggle--active': gaMetodoMutacion === 'random_resetting' }"
+                      @click="gaMetodoMutacion = 'random_resetting'"
+                    >Random resetting</button>
+                  </div>
+                  <span class="ga-config-hint">
+                    <template v-if="gaMetodoMutacion === 'intercambio'">Cambia la sección de un curso por otra diferente del mismo curso.</template>
+                    <template v-else>Asigna una sección completamente aleatoria al gen mutado.</template>
+                  </span>
+                </div>
+
+                <div class="ga-config-group">
+                  <label class="ga-config-label">Máx. cursos: <strong>{{ gaMaxCursos }}</strong></label>
+                  <input
+                    v-model.number="gaMaxCursos"
+                    type="range" min="3" max="15" step="1"
+                    class="ga-slider"
+                  />
+                  <span class="ga-config-hint">Límite de cursos que puede incluir el horario generado.</span>
+                </div>
+
+                <div class="ga-config-group">
+                  <label class="ga-config-label">Generaciones: <strong>{{ gaMaxGeneraciones }}</strong></label>
+                  <input
+                    v-model.number="gaMaxGeneraciones"
+                    type="range" min="50" max="400" step="10"
+                    class="ga-slider"
+                  />
+                  <span class="ga-config-hint">Más generaciones = más calidad, más tiempo de cómputo.</span>
+                </div>
+
+              </div>
+            </div>
+
             <div class="ideal-actions mt-4">
               <v-btn
                 color="teal-darken-2"
@@ -1019,17 +1126,6 @@ onMounted(cargarDatos)
                 @click="generarHorarioIdeal"
               >
                 Generar horario ideal
-              </v-btn>
-              <v-btn
-                color="red-darken-1"
-                variant="tonal"
-                rounded="lg"
-                size="large"
-                prepend-icon="mdi-file-pdf-box"
-                :disabled="!horarioIdealRows.length"
-                @click="exportarHorarioIdealPDF"
-              >
-                Exportar PDF
               </v-btn>
             </div>
 
@@ -1133,6 +1229,20 @@ onMounted(cargarDatos)
                 <span class="summary-label">Estado</span>
                 <strong>{{ resultadoGA.mejorIndividuo.esValido ? 'Sin conflictos' : 'Con conflictos' }}</strong>
               </div>
+            </div>
+
+            <!-- Botón imprimir -->
+            <div v-if="resultadoGA && horarioIdealRows.length" class="print-bar mt-4">
+              <button class="btn-imprimir" @click="exportarHorarioIdealPDF">
+                <v-icon size="16" class="mr-1">mdi-printer</v-icon>
+                Imprimir horario
+              </button>
+              <span v-if="alternativaIdx >= 0" class="print-label">
+                Se imprimirá: Alternativa {{ alternativaIdx + 1 }} — {{ resultadoGA.alternativas[alternativaIdx].etiqueta }}
+              </span>
+              <span v-else class="print-label">
+                Se imprimirá: Resultado original
+              </span>
             </div>
 
             <div class="ideal-table-shell mt-4">
@@ -1783,5 +1893,101 @@ onMounted(cargarDatos)
   margin: 10px 0 0;
   font-size: 12px;
   color: #8fffbf;
+}
+
+/* ── Barra de imprimir ── */
+.print-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.btn-imprimir {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 16px;
+  border-radius: 8px;
+  border: 1px solid #2e4a6a;
+  background: #0f2336;
+  color: #80cbc4;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .18s, color .18s;
+}
+.btn-imprimir:hover {
+  background: #1e3a5c;
+  color: #ffffff;
+}
+.print-label {
+  font-size: 12px;
+  color: #6d8fa8;
+}
+
+/* ── Panel configuración GA ── */
+.ga-config-panel {
+  background: #0b1929;
+  border: 1px solid #1e3a5c;
+  border-radius: 12px;
+  padding: 16px 20px;
+}
+.ga-config-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: #80cbc4;
+  margin: 0 0 14px;
+}
+.ga-config-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+.ga-config-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ga-config-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #a8c7e8;
+}
+.ga-toggle-group {
+  display: flex;
+  gap: 6px;
+}
+.ga-toggle {
+  flex: 1;
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid #2e4a6a;
+  background: #162030;
+  color: #6d8fa8;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.ga-toggle:hover {
+  background: #1e3a5c;
+  color: #d0e9ff;
+}
+.ga-toggle--active {
+  background: #0f4c75;
+  border-color: #3b82c4;
+  color: #ffffff;
+  font-weight: 700;
+}
+.ga-slider {
+  width: 100%;
+  accent-color: #3b82c4;
+  cursor: pointer;
+}
+.ga-config-hint {
+  font-size: 11px;
+  color: #4d6a82;
+  line-height: 1.4;
 }
 </style>

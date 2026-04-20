@@ -74,6 +74,7 @@ export interface RegistroHistorial {
   semestre: string;
   nota: number;
   aprobado: boolean;
+  fecha: string;
 }
 
 export interface DashboardResponse {

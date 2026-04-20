@@ -155,6 +155,9 @@ const getDashboardByCarnet = async (carnet: number): Promise<DashboardResponse> 
     semestre: h.es_semestre,
     nota: h.nota,
     aprobado: h.aprobado,
+    fecha: h.fecha_registro instanceof Date
+      ? h.fecha_registro.toISOString().split('T')[0]
+      : String(h.fecha_registro),
   }));
 
   return {
