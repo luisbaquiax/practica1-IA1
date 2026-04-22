@@ -3,7 +3,7 @@ import { IndividuoInterno } from "./Poblacion";
 import { FuncionAptitud } from "./FuncionAptitud";
 import { EstudianteGA } from "../types/EstudianteGA.type";
 
-/** Elimina genes con codigoCurso duplicado, conservando la primera aparición. */
+// Elimina genes con codigoCurso duplicado, conservando la primera aparición.
 function deduplicate(genes: GenGA[]): GenGA[] {
   const vistos = new Set<string>();
   return genes.filter(g => {
@@ -13,15 +13,11 @@ function deduplicate(genes: GenGA[]): GenGA[] {
   });
 }
 
-/**
- * Rellena hasta `target` genes con cursos que no estén ya en el cromosoma,
- * seleccionados aleatoriamente del pool disponible. Evita que el cruce encoja los cromosomas.
- */
+// Rellena hasta `target` genes con cursos no presentes, para que el cruce no encoja los cromosomas.
 function rellenar(genes: GenGA[], target: number, estudiante: EstudianteGA): GenGA[] {
   if (genes.length >= target) return genes;
   const codigosActuales = new Set(genes.map(g => g.codigoCurso));
   const disponibles = estudiante.cursosDisponibles.filter(c => !codigosActuales.has(c.codigo));
-  // Mezcla aleatoria para diversidad
   for (let i = disponibles.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [disponibles[i], disponibles[j]] = [disponibles[j], disponibles[i]];
@@ -39,7 +35,7 @@ function rellenar(genes: GenGA[], target: number, estudiante: EstudianteGA): Gen
 
 export class Cruce {
 
-  /** Cruce de un punto entre dos padres */
+  // Cruce de un punto: divide el cromosoma en un punto y combina las mitades.
   static unPunto(
     p1: IndividuoInterno,
     p2: IndividuoInterno,
@@ -64,7 +60,7 @@ export class Cruce {
     ];
   }
 
-  /** Cruce multipunto (2 puntos) */
+  // Cruce de dos puntos: intercambia el segmento central entre ambos padres.
   static multipunto(
     p1: IndividuoInterno,
     p2: IndividuoInterno,

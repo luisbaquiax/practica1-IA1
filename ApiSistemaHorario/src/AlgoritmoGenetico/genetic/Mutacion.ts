@@ -1,80 +1,72 @@
 import { EstudianteGA } from "../types/EstudianteGA.type";
 import { IndividuoInterno } from "./Poblacion";
 import { FuncionAptitud } from "./FuncionAptitud";
-import { GenGA } from "./FuncionAptitud";
-
-/** Rellena hasta `maxCursos` genes con cursos no presentes en el cromosoma. */
-function rellenarHastMax(genes: GenGA[], maxCursos: number, estudiante: EstudianteGA): void {
-  if (genes.length >= maxCursos) return;
-  const codigosActuales = new Set(genes.map(g => g.codigoCurso));
-  const disponibles = estudiante.cursosDisponibles.filter(c => !codigosActuales.has(c.codigo));
-  for (let i = disponibles.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [disponibles[i], disponibles[j]] = [disponibles[j], disponibles[i]];
-  }
-  let idx = 0;
-  while (genes.length < maxCursos && idx < disponibles.length) {
-    const nuevo = disponibles[idx++];
-    genes.push({
-      codigoCurso: nuevo.codigo,
-      seccionIdx: Math.floor(Math.random() * Math.max(1, nuevo.secciones.length)),
-    });
-  }
-}
 
 export class Mutacion {
 
-  /**
-   * Mutación por intercambio: cambia la sección de un curso aleatorio
-   * por otra sección diferente del mismo curso.
-   */
-  static intercambio(
-    individuo: IndividuoInterno,
+  // Muta 1 gen de 1 hijo elegido al azar (el caller decide si se invoca).
+  static mutarPoblacion(
+    hijos: IndividuoInterno[],
     estudiante: EstudianteGA,
-    tasa: number,
-    maxCursos?: number,
-  ): IndividuoInterno {
-    const genes = individuo.genes.map(g => ({ ...g }));
-    const cursoMap = new Map(estudiante.cursosDisponibles.map(c => [c.codigo, c]));
+    metodo: 'intercambio' | 'random_resetting',
+  ): void {
+    if (hijos.length === 0) return;
 
-    for (let i = 0; i < genes.length; i++) {
-      if (Math.random() < tasa) {
-        const curso = cursoMap.get(genes[i].codigoCurso);
-        if (!curso || curso.secciones.length <= 1) continue;
-        // Elige una sección diferente a la actual
-        let nuevoIdx: number;
-        do {
-          nuevoIdx = Math.floor(Math.random() * curso.secciones.length);
-        } while (nuevoIdx === genes[i].seccionIdx);
-        genes[i].seccionIdx = nuevoIdx;
-      }
+    const idx    = Math.floor(Math.random() * hijos.length);
+    const ind    = hijos[idx];
+    if (ind.genes.length === 0) return;
+
+    const genIdx = Math.floor(Math.random() * ind.genes.length);
+
+    if (metodo === 'random_resetting') {
+      Mutacion.randomResettingGen(ind, genIdx, estudiante);
+    } else {
+      Mutacion.intercambioGen(ind, genIdx, estudiante);
     }
 
-    if (maxCursos !== undefined) rellenarHastMax(genes, maxCursos, estudiante);
-    return { genes, fitness: FuncionAptitud.calcular(genes, estudiante) };
+    ind.fitness = FuncionAptitud.calcular(ind.genes, estudiante);
+  }
+
+  // Cambia la sección del gen por una diferente del mismo curso (o cambia el curso si solo hay 1 sección).
+  private static intercambioGen(
+    ind: IndividuoInterno,
+    genIdx: number,
+    estudiante: EstudianteGA,
+  ): void {
+    const gen   = ind.genes[genIdx];
+    const curso = estudiante.cursosDisponibles.find(c => c.codigo === gen.codigoCurso);
+
+    if (curso && curso.secciones.length > 1) {
+      let nueva: number;
+      do { nueva = Math.floor(Math.random() * curso.secciones.length); }
+      while (nueva === gen.seccionIdx);
+      ind.genes[genIdx] = { codigoCurso: gen.codigoCurso, seccionIdx: nueva };
+    } else {
+      const disponibles = estudiante.cursosDisponibles.filter(c => c.codigo !== gen.codigoCurso);
+      if (disponibles.length > 0) {
+        const nuevo = disponibles[Math.floor(Math.random() * disponibles.length)];
+        ind.genes[genIdx] = {
+          codigoCurso: nuevo.codigo,
+          seccionIdx:  Math.floor(Math.random() * Math.max(1, nuevo.secciones.length)),
+        };
+      }
+    }
   }
 
   /**
-   * Mutación random resetting: reasigna una sección completamente aleatoria.
+   * Random resetting: asigna una sección completamente aleatoria al gen.
    */
-  static randomResetting(
-    individuo: IndividuoInterno,
+  private static randomResettingGen(
+    ind: IndividuoInterno,
+    genIdx: number,
     estudiante: EstudianteGA,
-    tasa: number,
-    maxCursos?: number,
-  ): IndividuoInterno {
-    const genes = individuo.genes.map(g => ({ ...g }));
-    const cursoMap = new Map(estudiante.cursosDisponibles.map(c => [c.codigo, c]));
-
-    for (let i = 0; i < genes.length; i++) {
-      if (Math.random() < tasa) {
-        const curso = cursoMap.get(genes[i].codigoCurso);
-        if (!curso) continue;
-        genes[i].seccionIdx = Math.floor(Math.random() * Math.max(1, curso.secciones.length));
-      }
-    }
-
-    if (maxCursos !== undefined) rellenarHastMax(genes, maxCursos, estudiante);
-    return { genes, fitness: FuncionAptitud.calcular(genes, estudiante) };
+  ): void {
+    const gen   = ind.genes[genIdx];
+    const curso = estudiante.cursosDisponibles.find(c => c.codigo === gen.codigoCurso);
+    ind.genes[genIdx] = {
+      codigoCurso: gen.codigoCurso,
+      seccionIdx:  Math.floor(Math.random() * Math.max(1, curso?.secciones.length ?? 1)),
+    };
   }
 }
+

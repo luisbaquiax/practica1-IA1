@@ -166,6 +166,8 @@ export interface CursoSeleccionado {
 export interface ConfigGA {
   maxCursosPorHorario: number
   maxGeneraciones: number
+  porcentajeSeleccion: number        // 0.0–1.0 · fracción seleccionada para cruzar (élite = 1 - este valor)
+  umbralFitness: number              // detener si el mejor fitness alcanza este valor
   metodoSeleccion: 'torneo' | 'ruleta'
   metodoCruce: 'un_punto' | 'multipunto'
   metodoMutacion: 'intercambio' | 'random_resetting'

@@ -14,15 +14,16 @@ import { Op } from "sequelize";
 const GA_API_URL = process.env.GA_API_URL ?? "http://localhost:3000";
 
 const CONFIG_DEFAULT: ConfigGA = {
-  tamanioPoblacion:   60,
-  maxGeneraciones:    150,
-  tasaMutacion:       0.05,
-  tasaCruce:          0.8,
-  elitismo:           2,
+  tamanioPoblacion:    60,
+  maxGeneraciones:     150,
+  tasaMutacion:        0.05,
+  tasaCruce:           0.8,
+  porcentajeSeleccion: 0.4,   // 40 % selección → 60 % élite
+  umbralFitness:       Infinity,
   maxCursosPorHorario: 20,
-  metodoSeleccion:    "torneo",
-  metodoCruce:        "un_punto",
-  metodoMutacion:     "intercambio",
+  metodoSeleccion:     "torneo",
+  metodoCruce:         "un_punto",
+  metodoMutacion:      "intercambio",
 };
 
 export interface SeleccionEstudiante {
@@ -39,11 +40,10 @@ export class GaService {
   ): Promise<ResultadoGA> {
     const config: ConfigGA = { ...CONFIG_DEFAULT, ...configOverride };
 
-    // 1. Verificar que el estudiante exista
     const estudiante = await Estudiante.findByPk(seleccion.carnet);
     if (!estudiante) throw new Error(`Estudiante con carnet ${seleccion.carnet} no encontrado`);
 
-    // 2. Obtener repitencias del historial
+    // Repitencias por curso
     const historial = await Historial.findAll({
       where: { carnet_estudiante_id: seleccion.carnet },
     });
@@ -62,20 +62,19 @@ export class GaService {
       .filter(h => h.aprobado === false || (h.aprobado as unknown as string) === 'NO')
       .map(h => h.codigo_curso_id);
 
-    // 3. Obtener prerequisitos para calcular cursosQueDesbloquea
+    // Prerequisitos y cursos que desbloquea cada uno
     const todosLosCodigos = [...seleccion.obligatorios, ...seleccion.opcionales].map(c => c.codigo);
     const prerequisitos = await Prerequisito.findAll({
       where: { codigo_curso_id: { [Op.in]: todosLosCodigos } },
     });
 
-    // cursosQueDesbloquea: cuántos cursos de la selección se desbloquean si apruebo este
     const desbloquea: Record<number, number[]> = {};
     for (const prq of prerequisitos) {
       if (!desbloquea[prq.codigo_curso_prre]) desbloquea[prq.codigo_curso_prre] = [];
       desbloquea[prq.codigo_curso_prre].push(prq.codigo_curso_id);
     }
 
-    // 4. Obtener el horario general del GA-API (proyecto 1)
+    // Obtener el horario general publicado por el GA externo.
     let horarioGeneral: HorarioGeneral;
     try {
       const resp = await axios.get<HorarioGeneral>(`${GA_API_URL}/api/ga/ultima-solucion`);
@@ -88,9 +87,7 @@ export class GaService {
       throw new Error("El horario general está vacío. El administrador debe ejecutar el algoritmo primero.");
     }
 
-    // 5. Filtrar el calendario solo a los cursos que el estudiante seleccionó.
-    //    Cualquier curso (obligatorio u opcional) que NO aparezca en el horario general
-    //    queda descartado aquí: no tiene sección asignada y no tiene sentido incluirlo en el GA.
+    // Filtrar el calendario a los cursos seleccionados por el estudiante.
     const codigosSeleccionados = new Set(todosLosCodigos.map(String));
     const obligatoriosCodigos  = new Set(seleccion.obligatorios.map(c => String(c.codigo)));
 
@@ -102,7 +99,7 @@ export class GaService {
       throw new Error("Ninguno de los cursos seleccionados aparece en el horario general vigente.");
     }
 
-    // 6. Construir el mapa de metadata desde la selección del estudiante
+    // Mapa de metadata (créditos, prereqs, obligatorio) por código de curso.
     const seleccionMap = new Map(
       [...seleccion.obligatorios, ...seleccion.opcionales].map(c => [
         String(c.codigo),
@@ -117,14 +114,12 @@ export class GaService {
       ]),
     );
 
-    // 7. Mapear calendario → CursoDisponible[]
     const cursosDisponibles = mapCalendarioACursos(calendarioFiltrado, seleccionMap);
 
     if (cursosDisponibles.length === 0) {
       throw new Error("No se pudieron construir cursos disponibles a partir del horario.");
     }
 
-    // 8. Construir EstudianteGA
     const estudianteGA: EstudianteGA = {
       carnet:             seleccion.carnet,
       carreraId:          estudiante.carrera_id,
@@ -135,7 +130,6 @@ export class GaService {
       cursosDisponibles,
     };
 
-    // 9. Ejecutar el Algoritmo Genético
     const ag = new AlgoritmoGenetico();
     return ag.ejecutar(estudianteGA, config);
   }

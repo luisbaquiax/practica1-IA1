@@ -9,75 +9,72 @@ import { Cruce } from "./Cruce";
 import { Mutacion } from "./Mutacion";
 import { CursoDisponible } from "../types/CursoDisponible.type";
 
-const GENERACIONES_SIN_MEJORA_MAX = 30; // criterio de convergencia
-
 export class AlgoritmoGenetico {
 
   ejecutar(estudiante: EstudianteGA, config: ConfigGA): ResultadoGA {
     const inicio = Date.now();
     const evolucionFitness: number[] = [];
 
-    // 1. Población inicial
+    // Fase 1: población inicial completamente aleatoria, sin validación.
     let poblacion = Poblacion.generar(estudiante, config);
     this.ordenar(poblacion);
 
-    let mejorGlobal = poblacion[0];
-    let sinMejora = 0;
+    let mejorGlobal = { ...poblacion[0], genes: poblacion[0].genes.map(g => ({ ...g })) };
+
+    const N = config.tamanioPoblacion;
 
     for (let gen = 0; gen < config.maxGeneraciones; gen++) {
-      const nuevaPoblacion: IndividuoInterno[] = [];
 
-      // Elitismo: los N mejores pasan directamente
-      for (let e = 0; e < config.elitismo && e < poblacion.length; e++) {
-        nuevaPoblacion.push({ ...poblacion[e], genes: poblacion[e].genes.map(g => ({ ...g })) });
+      // Fase 2: élite — los (100% - %selección) mejores pasan directo.
+      let nSeleccionados = Math.floor(config.porcentajeSeleccion * N);
+      if (nSeleccionados % 2 !== 0) nSeleccionados--; // mantener par; el descartado suma a élite
+
+      const nElite = N - nSeleccionados;
+
+      const elite: IndividuoInterno[] = poblacion
+        .slice(0, nElite)
+        .map(ind => ({ ...ind, genes: ind.genes.map(g => ({ ...g })) }));
+
+      // Fase 3: selección — torneo o ruleta sobre la población completa.
+      const seleccionados = Seleccion.seleccionarN(poblacion, nSeleccionados, config.metodoSeleccion);
+
+      // Fase 4: cruce — mezcla aleatoria y cada pareja genera 2 hijos.
+      for (let i = seleccionados.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [seleccionados[i], seleccionados[j]] = [seleccionados[j], seleccionados[i]];
       }
 
-      // Llenamos el resto de la población
-      while (nuevaPoblacion.length < config.tamanioPoblacion) {
-        const padre1 = this.seleccionar(poblacion, config);
-        const padre2 = this.seleccionar(poblacion, config);
-
-        let hijos: [IndividuoInterno, IndividuoInterno];
-
-        if (Math.random() < config.tasaCruce) {
-          hijos = this.cruzar(padre1, padre2, estudiante, config);
-        } else {
-          hijos = [
-            { ...padre1, genes: padre1.genes.map(g => ({ ...g })) },
-            { ...padre2, genes: padre2.genes.map(g => ({ ...g })) },
-          ];
-        }
-
-        for (const hijo of hijos) {
-          const mutado = this.mutar(hijo, estudiante, config);
-          nuevaPoblacion.push(mutado);
-          if (nuevaPoblacion.length >= config.tamanioPoblacion) break;
-        }
+      const hijos: IndividuoInterno[] = [];
+      for (let i = 0; i < seleccionados.length; i += 2) {
+        const [h1, h2] = this.cruzar(seleccionados[i], seleccionados[i + 1], estudiante, config);
+        hijos.push(h1, h2);
       }
 
-      poblacion = nuevaPoblacion;
+      // Fase 5: mutación — un random decide si muta; si sí, 1 gen de 1 hijo cambia.
+      if (Math.random() < config.tasaMutacion) {
+        Mutacion.mutarPoblacion(hijos, estudiante, config.metodoMutacion);
+      }
+
+      // Nueva generación = élite + hijos.
+      poblacion = [...elite, ...hijos];
       this.ordenar(poblacion);
 
       const mejorGen = poblacion[0];
       evolucionFitness.push(mejorGen.fitness);
 
-      // Actualizar mejor global y revisar convergencia
       if (mejorGen.fitness > mejorGlobal.fitness) {
         mejorGlobal = { ...mejorGen, genes: mejorGen.genes.map(g => ({ ...g })) };
-        sinMejora = 0;
-      } else {
-        sinMejora++;
-        if (sinMejora >= GENERACIONES_SIN_MEJORA_MAX) break;
       }
+
+      // Fase 6: parada por generaciones (for) o por umbral de fitness.
+      if (mejorGlobal.fitness >= config.umbralFitness) break;
     }
 
-    // Construir resultado
     const cursoMap = new Map(estudiante.cursosDisponibles.map(c => [c.codigo, c]));
     const genesFinales = mejorGlobal.genes;
 
     const MAX_CURSOS_RESULTADO = config.maxCursosPorHorario;
 
-    // Deduplicar por codigoCurso antes de construir el resultado final
     const genesUnicos = genesFinales.filter(
       (g, idx, arr) => arr.findIndex(x => x.codigoCurso === g.codigoCurso) === idx,
     ).slice(0, MAX_CURSOS_RESULTADO);
@@ -216,12 +213,6 @@ export class AlgoritmoGenetico {
     poblacion.sort((a, b) => b.fitness - a.fitness);
   }
 
-  private seleccionar(poblacion: IndividuoInterno[], config: ConfigGA): IndividuoInterno {
-    return config.metodoSeleccion === 'ruleta'
-      ? Seleccion.ruleta(poblacion)
-      : Seleccion.torneo(poblacion);
-  }
-
   private cruzar(
     p1: IndividuoInterno,
     p2: IndividuoInterno,
@@ -232,16 +223,5 @@ export class AlgoritmoGenetico {
       return Cruce.multipunto(p1, p2, estudiante);
     }
     return Cruce.unPunto(p1, p2, estudiante);
-  }
-
-  private mutar(
-    individuo: IndividuoInterno,
-    estudiante: EstudianteGA,
-    config: ConfigGA,
-  ): IndividuoInterno {
-    if (config.metodoMutacion === 'random_resetting') {
-      return Mutacion.randomResetting(individuo, estudiante, config.tasaMutacion, config.maxCursosPorHorario);
-    }
-    return Mutacion.intercambio(individuo, estudiante, config.tasaMutacion, config.maxCursosPorHorario);
   }
 }

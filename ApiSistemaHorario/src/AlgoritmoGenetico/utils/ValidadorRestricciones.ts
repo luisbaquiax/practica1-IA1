@@ -2,7 +2,6 @@ import { DiaHora, DiaHorario, SeccionDisponible } from "../types/CursoDisponible
 import { GenGA } from "../genetic/FuncionAptitud";
 import { CursoDisponible } from "../types/CursoDisponible.type";
 
-// Expande un código de día a sus días individuales
 const DIAS_EXPANDIDOS: Record<DiaHorario, string[]> = {
   LXV: ["L", "X", "V"],
   LM:  ["L", "M"],
@@ -15,26 +14,22 @@ const DIAS_EXPANDIDOS: Record<DiaHorario, string[]> = {
   S:   ["S"],
 };
 
-// Solo se verifican conflictos en días de curso (L, X, V).
-// Los laboratorios (M, J) no participan en la detección de traslapes.
 const DIAS_CURSO = new Set(["L", "X", "V"]);
 
 export class ValidadorRestricciones {
 
-  /** Convierte "HH:MM" a minutos desde medianoche para comparación */
+  // Convierte "HH:MM" a minutos desde medianoche.
   static horaAMinutos(hora: string): number {
     const [h, m] = hora.split(":").map(Number);
     return h * 60 + m;
   }
 
-  /** Devuelve true si dos bloques DiaHora se superponen en días de curso (L, X, V).
-   *  Bloques de laboratorio (M, J) no generan conflicto. */
+  // True si dos bloques horarios se superponen en días de curso (L, X, V); ignora laboratorios.
   static hayTraslapeBloque(a: DiaHora, b: DiaHora): boolean {
     const diasA = (DIAS_EXPANDIDOS[a.dia] ?? [a.dia]).filter(d => DIAS_CURSO.has(d));
     const diasB = (DIAS_EXPANDIDOS[b.dia] ?? [b.dia]).filter(d => DIAS_CURSO.has(d));
 
-    // Si alguno de los bloques no tiene días de curso, no hay conflicto
-    if (diasA.length === 0 || diasB.length === 0) return false;
+      if (diasA.length === 0 || diasB.length === 0) return false;
 
     const compartenDia = diasA.some(d => diasB.includes(d));
     if (!compartenDia) return false;
@@ -47,7 +42,7 @@ export class ValidadorRestricciones {
     return Math.max(inicioA, inicioB) < Math.min(finA, finB);
   }
 
-  /** Devuelve true si dos SeccionDisponible tienen al menos un bloque que se traslapa */
+  // True si dos secciones tienen al menos un bloque que se traslapa.
   static hayTraslape(s1: SeccionDisponible, s2: SeccionDisponible): boolean {
     for (const dh1 of s1.diasHora) {
       for (const dh2 of s2.diasHora) {
@@ -57,10 +52,7 @@ export class ValidadorRestricciones {
     return false;
   }
 
-  /**
-   * Valida un conjunto de genes (representación interna del GA).
-   * Devuelve la lista de conflictos de traslape encontrados.
-   */
+  // Valida genes del AG y devuelve la lista de conflictos de traslape.
   static validarGenes(
     genes: GenGA[],
     cursos: CursoDisponible[],
@@ -91,7 +83,7 @@ export class ValidadorRestricciones {
     return conflictos;
   }
 
-  /** Cuenta traslapes numérico para la función de aptitud */
+  // Cuenta el número de traslapes (usado por la función de aptitud).
   static contarTraslapes(genes: GenGA[], cursos: CursoDisponible[]): number {
     return this.validarGenes(genes, cursos).length;
   }

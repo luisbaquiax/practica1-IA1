@@ -67,6 +67,8 @@ const dashboard = ref<DashboardResponse | null>(null)
 const alternativaIdx = ref(-1)
 
 // ── Configuración del AG ──
+const gaPorcentajeSeleccion = ref(40)        // 10–90 · porcentaje de la población seleccionada para cruzar
+const gaUmbralFitness = ref(0)              // 0 = sin umbral (solo para por generaciones)
 const gaMetodoSeleccion = ref<'torneo' | 'ruleta'>('torneo')
 const gaMetodoCruce = ref<'un_punto' | 'multipunto'>('un_punto')
 const gaMetodoMutacion = ref<'intercambio' | 'random_resetting'>('intercambio')
@@ -494,6 +496,8 @@ async function generarHorarioIdeal() {
       config: {
         maxCursosPorHorario: gaMaxCursos.value,
         maxGeneraciones: gaMaxGeneraciones.value,
+        porcentajeSeleccion: gaPorcentajeSeleccion.value / 100,
+        umbralFitness: gaUmbralFitness.value > 0 ? gaUmbralFitness.value : Infinity,
         metodoSeleccion: gaMetodoSeleccion.value,
         metodoCruce: gaMetodoCruce.value,
         metodoMutacion: gaMetodoMutacion.value,
@@ -1029,6 +1033,9 @@ onMounted(cargarDatos)
             <!-- Panel de configuración del AG -->
             <div class="ga-config-panel mt-4">
               <p class="ga-config-title">Configuración del algoritmo genético</p>
+
+              <!-- ── Métodos ──────────────────────────────────────────────── -->
+              <p class="ga-section-label">Métodos</p>
               <div class="ga-config-grid">
 
                 <div class="ga-config-group">
@@ -1091,6 +1098,22 @@ onMounted(cargarDatos)
                   </span>
                 </div>
 
+              </div>
+
+              <!-- ── Población ─────────────────────────────────────────────── -->
+              <p class="ga-section-label">Población</p>
+              <div class="ga-config-grid">
+
+                <div class="ga-config-group">
+                  <label class="ga-config-label">% Selección: <strong>{{ gaPorcentajeSeleccion }}%</strong> <span style="opacity:.6">(Élite: {{ 100 - gaPorcentajeSeleccion }}%)</span></label>
+                  <input
+                    v-model.number="gaPorcentajeSeleccion"
+                    type="range" min="10" max="90" step="10"
+                    class="ga-slider"
+                  />
+                  <span class="ga-config-hint">Fracción de la población elegida al azar para cruzar. El resto pasa como élite.</span>
+                </div>
+
                 <div class="ga-config-group">
                   <label class="ga-config-label">Máx. cursos: <strong>{{ gaMaxCursos }}</strong></label>
                   <input
@@ -1101,14 +1124,30 @@ onMounted(cargarDatos)
                   <span class="ga-config-hint">Límite de cursos que puede incluir el horario generado.</span>
                 </div>
 
+              </div>
+
+              <!-- ── Criterio de parada ──────────────────────────────────── -->
+              <p class="ga-section-label">Criterio de parada</p>
+              <div class="ga-config-grid">
+
                 <div class="ga-config-group">
-                  <label class="ga-config-label">Generaciones: <strong>{{ gaMaxGeneraciones }}</strong></label>
+                  <label class="ga-config-label">Generaciones</label>
                   <input
                     v-model.number="gaMaxGeneraciones"
-                    type="range" min="50" max="400" step="10"
-                    class="ga-slider"
+                    type="number" min="1" placeholder="ej. 150"
+                    class="ga-number-input"
                   />
                   <span class="ga-config-hint">Más generaciones = más calidad, más tiempo de cómputo.</span>
+                </div>
+
+                <div class="ga-config-group">
+                  <label class="ga-config-label">Umbral fitness</label>
+                  <input
+                    v-model.number="gaUmbralFitness"
+                    type="number" min="0" placeholder="0 = sin umbral"
+                    class="ga-number-input"
+                  />
+                  <span class="ga-config-hint">Detiene el AG cuando el mejor fitness alcanza este valor. 0 = solo por generaciones.</span>
                 </div>
 
               </div>
@@ -1984,9 +2023,33 @@ onMounted(cargarDatos)
   accent-color: #3b82c4;
   cursor: pointer;
 }
+.ga-number-input {
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid #2e4a62;
+  border-radius: 6px;
+  background: #0d1f2d;
+  color: #e0f0ff;
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+}
+.ga-number-input:focus {
+  border-color: #3b82c4;
+}
 .ga-config-hint {
   font-size: 11px;
   color: #4d6a82;
   line-height: 1.4;
+}
+.ga-section-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: #3b82c4;
+  margin: 14px 0 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #1a3045;
 }
 </style>

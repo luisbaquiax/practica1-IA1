@@ -7,7 +7,6 @@ export function mapCalendarioACursos(
   cursosDB: Map<string, { creditos: number; esObligatorio: boolean; prerequisitos: number[]; cursosQueDesbloquea: number[] }>
 ): CursoDisponible[] {
 
-  // Agrupamos por codigo_curso
   const mapa = new Map<string, CursoDisponible>();
 
   for (const entrada of calendario) {
@@ -53,10 +52,7 @@ export function mapCalendarioACursos(
     });
   }
 
-  // Solo se ofrecen secciones de tipo CLASE al GA.
-  // Las secciones de LABORATORIO (días M, J) no son seleccionables:
-  // no se pueden asignar como horario de curso y causarían resultados inválidos.
-  // Un curso sin ninguna sección CLASE se descarta del pool disponible.
+  // Solo se exponen secciones de tipo CLASE; cursos sin CLASE se descartan.
   const resultado: CursoDisponible[] = [];
   for (const curso of mapa.values()) {
     const seccionesClase = curso.secciones.filter(s => s.tipo === 'CLASE');
